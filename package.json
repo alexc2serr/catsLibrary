@@ -1,0 +1,25 @@
+{
+  "name": "usj-http-project",
+  "version": "2.0.0",
+  "description": "RFC 9112 HTTP/1.1 server & client built from scratch with raw TCP sockets — USJ Networks & Communications 2 Group Project",
+  "main": "src/server/httpServer.js",
+  "scripts": {
+    "start":       "node -e \"const {createServer}=require('./src/server/httpServer');createServer({port:3000}).start();\"",
+    "start:tls":   "node -e \"const {createTLSServer}=require('./src/server/httpServerTLS');createTLSServer({port:3443}).start();\"",
+    "start:express":"node src/server/httpServerExpress.js",
+    "client":      "node src/client/index.js",
+    "test":        "node --test tests/api.test.js",
+    "gen-certs":   "node scripts/generateCerts.js",
+    "dev":         "node -e \"const {createServer}=require('./src/server/httpServer');createServer({port:3000}).start();\""
+  },
+  "keywords": ["http", "tcp", "rfc9112", "raw-sockets", "rest-api", "university", "nodejs"],
+  "author": "USJ Networks Group",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {}
+}

@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Cat Shelter API — GUI Client</title>
+<meta name="description" content="Browser GUI client for the USJ HTTP Project Cat REST API"/>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:     #0b0f1a;
+    --bg2:    #131828;
+    --bg3:    #1a2235;
+    --border: #232d45;
+    --accent: #6366f1;
+    --accent2:#818cf8;
+    --green:  #22d3a5;
+    --red:    #f87171;
+    --yellow: #fbbf24;
+    --text:   #e2e8f0;
+    --muted:  #64748b;
+    --radius: 12px;
+    --transition: .18s ease;
+  }
+
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
+    min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* ── Layout ── */
+  .layout  { display: grid; grid-template-columns: 240px 1fr; flex: 1; height: 100vh; overflow: hidden; }
+  .sidebar { background: var(--bg2); border-right: 1px solid var(--border); display: flex;
+    flex-direction: column; padding: 0; overflow-y: auto; }
+  .main    { display: grid; grid-template-rows: 1fr 240px; overflow: hidden; }
+  .content { overflow-y: auto; padding: 24px; }
+  .inspector { border-top: 1px solid var(--border); background: var(--bg2);
+    display: flex; flex-direction: column; overflow: hidden; }
+
+  /* ── Sidebar ── */
+  .logo { padding: 20px 16px 12px; border-bottom: 1px solid var(--border); }
+  .logo h1 { font-size: 1rem; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent2), var(--green));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .logo p  { font-size: .72rem; color: var(--muted); margin-top: 2px; }
+
+  .nav-group { padding: 8px 0; }
+  .nav-label { font-size: .65rem; font-weight: 600; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--muted); padding: 8px 16px 4px; }
+  .nav-btn { display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 9px 16px; font-size: .82rem; color: var(--muted); background: none;
+    border: none; cursor: pointer; text-align: left; transition: var(--transition);
+    border-left: 3px solid transparent; }
+  .nav-btn:hover { color: var(--text); background: var(--bg3); }
+  .nav-btn.active { color: var(--accent2); background: var(--bg3); border-left-color: var(--accent); }
+  .nav-btn .icon { font-size: 1rem; }
+  .method-badge { font-size: .6rem; font-family: 'JetBrains Mono', monospace;
+    font-weight: 600; padding: 1px 5px; border-radius: 4px; margin-left: auto; }
+  .GET    { background: #1a3a5c; color: #60b4f7; }
+  .POST   { background: #1a3a2a; color: #4ade80; }
+  .PUT    { background: #3a2a10; color: #fb923c; }
+  .DELETE { background: #3a1a1a; color: #f87171; }
+  .AUTH   { background: #2a1a45; color: #c084fc; }
+
+  /* ── Auth status bar ── */
+  .auth-bar { padding: 10px 16px; border-top: 1px solid var(--border); margin-top: auto;
+    font-size: .75rem; color: var(--muted); }
+  .auth-bar span.user { color: var(--green); font-weight: 500; }
+
+  /* ── Content area ── */
+  .section { display: none; }
+  .section.active { display: block; }
+  h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 16px; color: var(--text);
+    display: flex; align-items: center; gap: 8px; }
+
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px; margin-bottom: 16px; }
+  .card h3 { font-size: .85rem; font-weight: 600; color: var(--accent2); margin-bottom: 12px; }
+
+  /* ── Forms ── */
+  .form-row { display: grid; gap: 10px; margin-bottom: 12px; }
+  .form-row.cols2 { grid-template-columns: 1fr 1fr; }
+  label  { font-size: .75rem; color: var(--muted); display: block; margin-bottom: 4px; }
+  input, select, textarea {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: .82rem;
+    font-family: inherit; outline: none; transition: var(--transition); }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 80px; font-family: 'JetBrains Mono', monospace; font-size: .78rem; }
+
+  /* ── Buttons ── */
+  .btn { padding: 9px 18px; border-radius: 8px; font-size: .82rem; font-weight: 600;
+    border: none; cursor: pointer; transition: var(--transition); display: inline-flex;
+    align-items: center; gap: 6px; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-danger  { background: #7f1d1d; color: var(--red); }
+  .btn-danger:hover  { background: #991b1b; }
+  .btn-success { background: #14532d; color: var(--green); }
+  .btn-success:hover { background: #166534; }
+  .btn-ghost   { background: var(--bg3); color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); }
+
+  /* ── Cat grid ── */
+  .cats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .cat-card  { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px; cursor: pointer; transition: var(--transition); }
+  .cat-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .cat-card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(99,102,241,.3); }
+  .cat-name { font-weight: 600; font-size: .9rem; margin-bottom: 4px; }
+  .cat-meta { font-size: .72rem; color: var(--muted); }
+  .cat-id   { font-size: .65rem; color: var(--accent2); font-family: 'JetBrains Mono', monospace; }
+
+  /* ── Status chip ── */
+  .chip { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: .68rem; font-weight: 600; }
+  .chip-ok  { background: #14532d; color: var(--green); }
+  .chip-err { background: #7f1d1d; color: var(--red); }
+  .chip-warn{ background: #713f12; color: var(--yellow); }
+
+  /* ── Inspector ── */
+  .inspector-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
+  .itab { padding: 8px 16px; font-size: .75rem; background: none; border: none;
+    border-bottom: 2px solid transparent; color: var(--muted); cursor: pointer; transition: var(--transition); }
+  .itab.active { color: var(--accent2); border-bottom-color: var(--accent); }
+  .inspector-body { flex: 1; overflow-y: auto; padding: 12px 16px; }
+  .inspector-body pre { font-family: 'JetBrains Mono', monospace; font-size: .72rem;
+    line-height: 1.6; color: var(--text); white-space: pre-wrap; word-break: break-all; }
+  .status-line { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .loader { display: none; width: 14px; height: 14px; border: 2px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; }
+  .loader.active { display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="logo">
+      <h1>🐱 Cat Shelter API</h1>
+      <p>RFC 9112 · Raw TCP Sockets</p>
+    </div>
+
+    <nav>
+      <div class="nav-group">
+        <div class="nav-label">Cats</div>
+        <button class="nav-btn active" onclick="showSection('cats')" id="nav-cats">
+          <span class="icon">📋</span> List All Cats
+          <span class="method-badge GET">GET</span>
+        </button>
+        <button class="nav-btn" onclick="showSection('cat-create')" id="nav-cat-create">
+          <span class="icon">➕</span> Create Cat
+          <span class="method-badge POST">POST</span>
+        </button>
+        <button class="nav-btn" onclick="showSection('cat-update')" id="nav-cat-update">
+          <span class="icon">✏️</span> Update Cat
+          <span class="method-badge PUT">PUT</span>
+        </button>
+        <button class="nav-btn" onclick="showSection('cat-delete')" id="nav-cat-delete">
+          <span class="icon">🗑️</span> Delete Cat
+          <span class="method-badge DELETE">DELETE</span>
+        </button>
+        <button class="nav-btn" onclick="showSection('cat-photo')" id="nav-cat-photo">
+          <span class="icon">📸</span> Upload Photo
+          <span class="method-badge POST">POST</span>
+        </button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">Owners</div>
+        <button class="nav-btn" onclick="showSection('owners')" id="nav-owners">
+          <span class="icon">👥</span> List Owners
+          <span class="method-badge GET">GET</span>
+        </button>
+        <button class="nav-btn" onclick="showSection('owner-create')" id="nav-owner-create">
+          <span class="icon">➕</span> Create Owner
+          <span class="method-badge POST">POST</span>
+        </button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">Authentication</div>
+        <button class="nav-btn" onclick="showSection('auth-register')" id="nav-auth-register">
+          <span class="icon">📝</span> Register
+          <span class="method-badge AUTH">POST</span>
+        </button>
+        <button class="nav-btn" onclick="showSection('auth-login')" id="nav-auth-login">
+          <span class="icon">🔑</span> Login
+          <span class="method-badge AUTH">POST</span>
+        </button>
+        <button class="nav-btn" onclick="showSection('auth-me')" id="nav-auth-me">
+          <span class="icon">👤</span> My Profile
+          <span class="method-badge AUTH">GET</span>
+        </button>
+      </div>
+    </nav>
+
+    <div class="auth-bar" id="auth-bar">Not logged in · using API key</div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <div class="main">
+    <div class="content">
+
+      <!-- Cats list -->
+      <section id="section-cats" class="section active">
+        <h2>📋 All Cats <div class="loader" id="loader-cats"></div></h2>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <button class="btn btn-primary" onclick="loadCats()">🔄 Refresh</button>
+          <button class="btn btn-ghost" onclick="headCats()">HEAD check</button>
+        </div>
+        <div class="cats-grid" id="cats-grid"></div>
+      </section>
+
+      <!-- Create cat -->
+      <section id="section-cat-create" class="section">
+        <h2>➕ Create Cat</h2>
+        <div class="card">
+          <div class="form-row cols2">
+            <div><label>Name *</label><input id="cc-name" placeholder="Whiskers"/></div>
+            <div><label>Breed *</label><input id="cc-breed" placeholder="Domestic Shorthair"/></div>
+          </div>
+          <div class="form-row cols2">
+            <div><label>Age</label><input id="cc-age" type="number" placeholder="3"/></div>
+            <div><label>Color</label><input id="cc-color" placeholder="Orange"/></div>
+          </div>
+          <button class="btn btn-success" onclick="createCat()">✅ Create Cat</button>
+        </div>
+      </section>
+
+      <!-- Update cat -->
+      <section id="section-cat-update" class="section">
+        <h2>✏️ Update Cat</h2>
+        <div class="card">
+          <div class="form-row"><div><label>Cat ID *</label><input id="uc-id" type="number" placeholder="1"/></div></div>
+          <div class="form-row cols2">
+            <div><label>Name *</label><input id="uc-name" placeholder="Whiskers"/></div>
+            <div><label>Breed *</label><input id="uc-breed" placeholder="Siamese"/></div>
+          </div>
+          <div class="form-row cols2">
+            <div><label>Age</label><input id="uc-age" type="number" placeholder="4"/></div>
+            <div><label>Color</label><input id="uc-color" placeholder="White"/></div>
+          </div>
+          <button class="btn btn-primary" onclick="updateCat()">💾 Save Changes</button>
+        </div>
+      </section>
+
+      <!-- Delete cat -->
+      <section id="section-cat-delete" class="section">
+        <h2>🗑️ Delete Cat</h2>
+        <div class="card">
+          <div class="form-row"><div><label>Cat ID *</label><input id="dc-id" type="number" placeholder="1"/></div></div>
+          <button class="btn btn-danger" onclick="deleteCat()">🗑️ Delete Cat</button>
+        </div>
+      </section>
+
+      <!-- Photo upload -->
+      <section id="section-cat-photo" class="section">
+        <h2>📸 Upload Cat Photo</h2>
+        <div class="card">
+          <div class="form-row"><div><label>Cat ID *</label><input id="ph-id" type="number" placeholder="1"/></div></div>
+          <div class="form-row">
+            <div><label>Photo File</label><input id="ph-file" type="file" accept="image/*" onchange="previewPhoto(this)"/></div>
+          </div>
+          <div id="ph-preview" style="margin:8px 0;display:none">
+            <img id="ph-img" style="max-height:150px;border-radius:8px;border:1px solid var(--border)"/>
+          </div>
+          <button class="btn btn-success" onclick="uploadPhoto()">⬆️ Upload Photo</button>
+        </div>
+      </section>
+
+      <!-- Owners list -->
+      <section id="section-owners" class="section">
+        <h2>👥 All Owners <div class="loader" id="loader-owners"></div></h2>
+        <button class="btn btn-primary" onclick="loadOwners()" style="margin-bottom:16px">🔄 Refresh</button>
+        <div id="owners-list"></div>
+      </section>
+
+      <!-- Create owner -->
+      <section id="section-owner-create" class="section">
+        <h2>➕ Create Owner</h2>
+        <div class="card">
+          <div class="form-row cols2">
+            <div><label>Name *</label><input id="oc-name" placeholder="Alice"/></div>
+            <div><label>Email *</label><input id="oc-email" type="email" placeholder="alice@example.com"/></div>
+          </div>
+          <div class="form-row"><div><label>Phone</label><input id="oc-phone" placeholder="+34 600 000 000"/></div></div>
+          <button class="btn btn-success" onclick="createOwner()">✅ Create Owner</button>
+        </div>
+      </section>
+
+      <!-- Auth: Register -->
+      <section id="section-auth-register" class="section">
+        <h2>📝 Register</h2>
+        <div class="card" style="max-width:360px">
+          <div class="form-row"><div><label>Username</label><input id="ar-user" placeholder="myusername"/></div></div>
+          <div class="form-row"><div><label>Password</label><input id="ar-pwd" type="password" placeholder="••••••"/></div></div>
+          <button class="btn btn-primary" onclick="registerUser()">Register</button>
+        </div>
+      </section>
+
+      <!-- Auth: Login -->
+      <section id="section-auth-login" class="section">
+        <h2>🔑 Login</h2>
+        <div class="card" style="max-width:360px">
+          <div class="form-row"><div><label>Username</label><input id="al-user" placeholder="myusername"/></div></div>
+          <div class="form-row"><div><label>Password</label><input id="al-pwd" type="password" placeholder="••••••"/></div></div>
+          <button class="btn btn-primary" onclick="loginUser()">Login</button>
+          <button class="btn btn-ghost" onclick="logoutUser()" style="margin-top:8px">Logout</button>
+        </div>
+      </section>
+
+      <!-- Auth: Me -->
+      <section id="section-auth-me" class="section">
+        <h2>👤 My Profile</h2>
+        <button class="btn btn-primary" onclick="getMe()">Fetch Profile</button>
+        <div id="me-result" style="margin-top:16px"></div>
+      </section>
+
+    </div><!-- /content -->
+
+    <!-- ── HTTP Inspector ── -->
+    <div class="inspector">
+      <div class="inspector-tabs">
+        <button class="itab active" onclick="switchTab('response')" id="itab-response">Response</button>
+        <button class="itab" onclick="switchTab('request')" id="itab-request">Raw Request</button>
+        <button class="itab" onclick="switchTab('headers')" id="itab-headers">Headers</button>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:8px;padding:0 12px">
+          <div class="loader" id="loader-main"></div>
+          <div id="status-chip"></div>
+        </div>
+      </div>
+      <div class="inspector-body">
+        <pre id="inspector-content">── Make a request to see details here ──</pre>
+      </div>
+    </div>
+  </div><!-- /main -->
+</div>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────────────────
+const API_KEY = 'supersecret-key-123';
+let sessionToken = null;
+let currentTab   = 'response';
+let lastRequest  = null;
+let lastResponse = null;
+
+// ── Nav ─────────────────────────────────────────────────────────────────────
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const sec = document.getElementById('section-' + id);
+  const btn = document.getElementById('nav-' + id);
+  if (sec) sec.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.itab').forEach(t => t.classList.remove('active'));
+  document.getElementById('itab-' + tab).classList.add('active');
+  renderInspector();
+}
+
+// ── HTTP fetch wrapper ───────────────────────────────────────────────────────
+async function apiCall(method, path, body = null, extraHeaders = {}) {
+  const headers = { 'X-API-Key': API_KEY, ...extraHeaders };
+  if (sessionToken) headers['X-Session-Token'] = sessionToken;
+  if (body)         headers['Content-Type'] = 'application/json';
+
+  const opts = { method, headers };
+  if (body) opts.body = JSON.stringify(body);
+
+  lastRequest = { method, path, headers, body };
+  document.getElementById('loader-main').classList.add('active');
+  document.getElementById('status-chip').innerHTML = '';
+
+  try {
+    const resp = await fetch(path, opts);
+    const text = await resp.text();
+    let data;
+    try { data = JSON.parse(text); } catch { data = text; }
+
+    lastResponse = { status: resp.status, statusText: resp.statusText,
+      headers: Object.fromEntries(resp.headers.entries()), body: data, raw: text };
+
+    const color = resp.ok ? 'chip-ok' : resp.status < 500 ? 'chip-warn' : 'chip-err';
+    document.getElementById('status-chip').innerHTML =
+      `<span class="chip ${color}">${resp.status} ${resp.statusText}</span>`;
+
+    renderInspector();
+    return { ok: resp.ok, status: resp.status, data };
+  } catch (err) {
+    lastResponse = { error: err.message };
+    document.getElementById('inspector-content').textContent = 'Error: ' + err.message;
+    return { ok: false, error: err.message };
+  } finally {
+    document.getElementById('loader-main').classList.remove('active');
+  }
+}
+
+function renderInspector() {
+  if (!lastResponse) return;
+  const el = document.getElementById('inspector-content');
+  if (currentTab === 'response') {
+    el.textContent = lastResponse.error
+      ? 'ERROR: ' + lastResponse.error
+      : JSON.stringify(lastResponse.body, null, 2);
+  } else if (currentTab === 'request') {
+    if (!lastRequest) return;
+    const h = Object.entries(lastRequest.headers).map(([k,v]) => `${k}: ${v}`).join('\n');
+    const b = lastRequest.body ? '\n\n' + JSON.stringify(lastRequest.body, null, 2) : '';
+    el.textContent = `${lastRequest.method} ${lastRequest.path} HTTP/1.1\n${h}${b}`;
+  } else {
+    el.textContent = JSON.stringify(lastResponse.headers, null, 2);
+  }
+}
+
+// ── Cats ────────────────────────────────────────────────────────────────────
+async function loadCats() {
+  const l = document.getElementById('loader-cats');
+  l.classList.add('active');
+  const result = await apiCall('GET', '/api/cats');
+  l.classList.remove('active');
+  const grid = document.getElementById('cats-grid');
+  if (!result.ok || !result.data.data) { grid.innerHTML = '<p style="color:var(--red)">Failed to load cats</p>'; return; }
+  grid.innerHTML = result.data.data.map(c => `
+    <div class="cat-card" onclick="selectCat(${c.id})">
+      <div class="cat-id">ID: ${c.id}</div>
+      <div class="cat-name">${c.name}</div>
+      <div class="cat-meta">${c.breed} · ${c.age ?? '?'} yrs · ${c.color ?? '–'}</div>
+    </div>`).join('');
+}
+
+function selectCat(id) {
+  document.querySelectorAll('.cat-card').forEach(c => c.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  document.getElementById('uc-id').value = id;
+  document.getElementById('dc-id').value = id;
+  document.getElementById('ph-id').value = id;
+}
+
+async function headCats() {
+  await apiCall('HEAD', '/api/cats');
+}
+
+async function createCat() {
+  const name = document.getElementById('cc-name').value.trim();
+  const breed = document.getElementById('cc-breed').value.trim();
+  const age = Number(document.getElementById('cc-age').value) || null;
+  const color = document.getElementById('cc-color').value.trim() || null;
+  if (!name || !breed) { alert('Name and Breed are required.'); return; }
+  const r = await apiCall('POST', '/api/cats', { name, breed, age, color });
+  if (r.ok) { alert(`✅ Cat "${name}" created with ID ${r.data.data.id}`); showSection('cats'); loadCats(); }
+}
+
+async function updateCat() {
+  const id = document.getElementById('uc-id').value;
+  const name = document.getElementById('uc-name').value.trim();
+  const breed = document.getElementById('uc-breed').value.trim();
+  const age = Number(document.getElementById('uc-age').value) || null;
+  const color = document.getElementById('uc-color').value.trim() || null;
+  if (!id || !name || !breed) { alert('ID, Name and Breed are required.'); return; }
+  const r = await apiCall('PUT', `/api/cats/${id}`, { name, breed, age, color });
+  if (r.ok) alert(`✅ Cat ${id} updated`);
+}
+
+async function deleteCat() {
+  const id = document.getElementById('dc-id').value;
+  if (!id || !confirm(`Delete cat ${id}?`)) return;
+  const r = await apiCall('DELETE', `/api/cats/${id}`);
+  if (r.status === 204) { alert(`🗑️ Cat ${id} deleted`); showSection('cats'); loadCats(); }
+}
+
+function previewPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('ph-preview').style.display = 'block';
+    document.getElementById('ph-img').src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function uploadPhoto() {
+  const id   = document.getElementById('ph-id').value;
+  const file = document.getElementById('ph-file').files[0];
+  if (!id || !file) { alert('Cat ID and a photo file are required.'); return; }
+
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const dataUrl = e.target.result; // data:image/jpeg;base64,...
+    const r = await apiCall('POST', `/api/cats/${id}/photo`, { photo: dataUrl });
+    if (r.ok) alert(`📸 Photo uploaded for cat ${id}`);
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Owners ───────────────────────────────────────────────────────────────────
+async function loadOwners() {
+  const l = document.getElementById('loader-owners');
+  l.classList.add('active');
+  const result = await apiCall('GET', '/api/owners');
+  l.classList.remove('active');
+  const list = document.getElementById('owners-list');
+  if (!result.ok) { list.innerHTML = '<p style="color:var(--red)">Failed to load owners</p>'; return; }
+  list.innerHTML = result.data.data.map(o => `
+    <div class="card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:start">
+        <div>
+          <div style="font-weight:600">${o.name}</div>
+          <div style="font-size:.75rem;color:var(--muted)">${o.email} ${o.phone ? '· ' + o.phone : ''}</div>
+          <div style="font-size:.72rem;color:var(--accent2);margin-top:4px">
+            Cats: ${o.cats && o.cats.length ? o.cats.map(c => c.name).join(', ') : 'none'}
+          </div>
+        </div>
+        <span style="font-size:.65rem;color:var(--muted);font-family:'JetBrains Mono',monospace">ID:${o.id}</span>
+      </div>
+    </div>`).join('');
+}
+
+async function createOwner() {
+  const name  = document.getElementById('oc-name').value.trim();
+  const email = document.getElementById('oc-email').value.trim();
+  const phone = document.getElementById('oc-phone').value.trim() || null;
+  if (!name || !email) { alert('Name and Email are required.'); return; }
+  const r = await apiCall('POST', '/api/owners', { name, email, phone });
+  if (r.ok) { alert(`✅ Owner "${name}" created`); showSection('owners'); loadOwners(); }
+}
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+async function registerUser() {
+  const username = document.getElementById('ar-user').value.trim();
+  const password = document.getElementById('ar-pwd').value;
+  if (!username || !password) { alert('Fill in all fields.'); return; }
+  const r = await apiCall('POST', '/auth/register', { username, password }, { 'X-API-Key': undefined });
+  if (r.ok) alert(`✅ User "${username}" registered. Now login.`);
+}
+
+async function loginUser() {
+  const username = document.getElementById('al-user').value.trim();
+  const password = document.getElementById('al-pwd').value;
+  if (!username || !password) { alert('Fill in all fields.'); return; }
+  const r = await apiCall('POST', '/auth/login', { username, password }, { 'X-API-Key': undefined });
+  if (r.ok && r.data.token) {
+    sessionToken = r.data.token;
+    document.getElementById('auth-bar').innerHTML =
+      `Logged in as <span class="user">${r.data.user.username}</span>`;
+    alert('✅ Logged in successfully!');
+  }
+}
+
+async function logoutUser() {
+  await apiCall('POST', '/auth/logout');
+  sessionToken = null;
+  document.getElementById('auth-bar').textContent = 'Not logged in · using API key';
+  alert('👋 Logged out');
+}
+
+async function getMe() {
+  const r = await apiCall('GET', '/auth/me');
+  const el = document.getElementById('me-result');
+  if (r.ok) {
+    el.innerHTML = `<div class="card"><pre>${JSON.stringify(r.data, null, 2)}</pre></div>`;
+  } else {
+    el.innerHTML = `<p style="color:var(--red)">Not authenticated. Login first.</p>`;
+  }
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+loadCats();
+</script>
+</body>
+</html>
