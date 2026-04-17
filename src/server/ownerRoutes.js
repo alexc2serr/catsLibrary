@@ -28,7 +28,7 @@ let ownerStore = [
   { id: 1, name: 'Alice Martínez', email: 'alice@example.com', phone: '+34 600 111 222' },
   { id: 2, name: 'Bob García',     email: 'bob@example.com',   phone: '+34 600 333 444' },
 ];
-let nextOwnerId = 3;
+
 
 /** Live reference to the cats array (injected by the server on startup) */
 let catStore = null;
@@ -85,7 +85,11 @@ function createOwner(body) {
     return makeResponse(422, 'Unprocessable Entity', { error: '"name" and "email" are required' });
   }
 
-  const owner = { id: nextOwnerId++, name, email, phone: phone ?? null };
+  let newId = 1;
+  const takenIds = new Set(ownerStore.map(o => o.id));
+  while (takenIds.has(newId)) newId++;
+
+  const owner = { id: newId, name, email, phone: phone ?? null };
   ownerStore.push(owner);
   return makeResponse(201, 'Created', { success: true, data: ownerWithCats(owner) });
 }

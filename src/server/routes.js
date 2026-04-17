@@ -70,7 +70,7 @@ let catStore = [
     updatedAt: new Date().toISOString(),
   },
 ];
-let nextId = 4;
+
 
 /** Expose catStore so ownerRoutes can share the same reference */
 module.exports.catStore = catStore;
@@ -131,8 +131,13 @@ function createCat(body) {
   }
 
   const now = new Date().toISOString();
+
+  let newId = 1;
+  const takenIds = new Set(catStore.map(c => c.id));
+  while (takenIds.has(newId)) newId++;
+
   const newCat = {
-    id: nextId++,
+    id: newId,
     name,
     breed,
     age: age ?? null,
