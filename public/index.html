@@ -88,11 +88,18 @@
 
   <div class="card">
     <h2>🔑 Authentication</h2>
-    <p>All <code>/api/*</code> routes require one of:</p>
-    <ul style="margin-top:12px;padding-left:20px;line-height:2">
-      <li>Header: <code>X-API-Key: supersecret-key-123</code></li>
-      <li>Header: <code>Authorization: Bearer supersecret-key-123</code></li>
-    </ul>
+    <p style="margin-bottom: 12px">All <code>/api/*</code> routes require one of: <code>X-API-Key</code>, <code>Authorization: Bearer</code>, or a session cookie.</p>
+    <table>
+      <thead>
+        <tr><th>Method</th><th>Path</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="badge post">POST</span></td>  <td><code>/auth/register</code></td>  <td>Register a new user</td></tr>
+        <tr><td><span class="badge post">POST</span></td>  <td><code>/auth/login</code></td>     <td>Login and receive session token</td></tr>
+        <tr><td><span class="badge post">POST</span></td>  <td><code>/auth/logout</code></td>    <td>Logout and clear session</td></tr>
+        <tr><td><span class="badge get">GET</span></td>    <td><code>/auth/me</code></td>        <td>Get current user profile</td></tr>
+      </tbody>
+    </table>
   </div>
 
   <div class="card">
