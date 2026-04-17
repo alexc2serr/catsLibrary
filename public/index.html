@@ -53,6 +53,16 @@
     .post   { background: #1a3a2a; color: #4ade80; }
     .put    { background: #3a2a10; color: #fb923c; }
     .delete { background: #3a1a1a; color: #f87171; }
+    .json-block {
+      background: #0f1117;
+      border: 1px solid #2d3748;
+      padding: 6px;
+      border-radius: 6px;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin: 4px 0;
+    }
     code {
       background: #111827;
       padding: 2px 7px;
@@ -71,7 +81,7 @@
   </header>
 
   <div class="card">
-    <h2>📡 API Endpoints</h2>
+    <h2>🐱 Cats API</h2>
     <table>
       <thead>
         <tr><th>Method</th><th>Path</th><th>Description</th><th>Auth</th><th>Body Example</th></tr>
@@ -79,9 +89,73 @@
       <tbody>
         <tr><td><span class="badge get">GET</span></td>    <td><code>/api/cats</code></td>         <td>List all cats</td><td>Yes</td><td>-</td></tr>
         <tr><td><span class="badge get">GET</span></td>    <td><code>/api/cats/:id</code></td>      <td>Get a cat by ID</td><td>Yes</td><td>-</td></tr>
-        <tr><td><span class="badge post">POST</span></td>  <td><code>/api/cats</code></td>         <td>Create a new cat</td><td>Yes</td><td><code style="font-size:0.75rem">{"name":"...","breed":"..."}</code></td></tr>
-        <tr><td><span class="badge put">PUT</span></td>    <td><code>/api/cats/:id</code></td>      <td>Update a cat</td><td>Yes</td><td><code style="font-size:0.75rem">{"name":"...","breed":"..."}</code></td></tr>
+        <tr>
+          <td><span class="badge post">POST</span></td>
+          <td><code>/api/cats</code></td>
+          <td>Create a new cat</td>
+          <td>Yes</td>
+          <td><pre class="json-block">{
+  "name": "Whiskers",
+  "breed": "Siamese"
+}</pre></td>
+        </tr>
+        <tr>
+          <td><span class="badge put">PUT</span></td>
+          <td><code>/api/cats/:id</code></td>
+          <td>Update a cat</td>
+          <td>Yes</td>
+          <td><pre class="json-block">{
+  "name": "Whiskers",
+  "breed": "Siamese"
+}</pre></td>
+        </tr>
         <tr><td><span class="badge delete">DELETE</span></td><td><code>/api/cats/:id</code></td>   <td>Delete a cat</td><td>Yes</td><td>-</td></tr>
+        <tr>
+          <td><span class="badge post">POST</span></td>
+          <td><code>/api/cats/:id/photo</code></td>
+          <td>Upload photo</td>
+          <td>Yes</td>
+          <td><pre class="json-block">{
+  "photo": "data:image/..."
+}</pre></td>
+        </tr>
+        <tr><td><span class="badge get">GET</span></td>    <td><code>/api/cats/:id/photo</code></td> <td>Download photo</td><td>Yes</td><td>-</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>👥 Owners API</h2>
+    <table>
+      <thead>
+        <tr><th>Method</th><th>Path</th><th>Description</th><th>Auth</th><th>Body Example</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="badge get">GET</span></td>    <td><code>/api/owners</code></td>         <td>List all owners</td><td>Yes</td><td>-</td></tr>
+        <tr><td><span class="badge get">GET</span></td>    <td><code>/api/owners/:id</code></td>      <td>Get owner by ID</td><td>Yes</td><td>-</td></tr>
+        <tr>
+          <td><span class="badge post">POST</span></td>
+          <td><code>/api/owners</code></td>
+          <td>Create owner</td>
+          <td>Yes</td>
+          <td><pre class="json-block">{
+  "name": "Alice",
+  "email": "a@eu.com"
+}</pre></td>
+        </tr>
+        <tr>
+          <td><span class="badge put">PUT</span></td>
+          <td><code>/api/owners/:id</code></td>
+          <td>Update owner</td>
+          <td>Yes</td>
+          <td><pre class="json-block">{
+  "name": "Alice",
+  "email": "a@eu.com"
+}</pre></td>
+        </tr>
+        <tr><td><span class="badge delete">DELETE</span></td><td><code>/api/owners/:id</code></td>   <td>Delete owner</td><td>Yes</td><td>-</td></tr>
+        <tr><td><span class="badge post">POST</span></td>  <td><code>/api/owners/:oid/cats/:cid</code></td> <td>Assign cat</td><td>Yes</td><td>-</td></tr>
+        <tr><td><span class="badge delete">DELETE</span></td><td><code>/api/owners/:oid/cats/:cid</code></td> <td>Unassign cat</td><td>Yes</td><td>-</td></tr>
       </tbody>
     </table>
   </div>
@@ -94,8 +168,26 @@
         <tr><th>Method</th><th>Path</th><th>Description</th><th>Auth</th><th>Body Example</th></tr>
       </thead>
       <tbody>
-        <tr><td><span class="badge post">POST</span></td>  <td><code>/auth/register</code></td>  <td>Register user</td><td>No</td><td><code style="font-size:0.75rem">{"username":"...","password":"..."}</code></td></tr>
-        <tr><td><span class="badge post">POST</span></td>  <td><code>/auth/login</code></td>     <td>Login (get token)</td><td>No</td><td><code style="font-size:0.75rem">{"username":"...","password":"..."}</code></td></tr>
+        <tr>
+          <td><span class="badge post">POST</span></td>
+          <td><code>/auth/register</code></td>
+          <td>Register user</td>
+          <td>No</td>
+          <td><pre class="json-block">{
+  "username": "student",
+  "password": "123"
+}</pre></td>
+        </tr>
+        <tr>
+          <td><span class="badge post">POST</span></td>
+          <td><code>/auth/login</code></td>
+          <td>Login (get token)</td>
+          <td>No</td>
+          <td><pre class="json-block">{
+  "username": "student",
+  "password": "123"
+}</pre></td>
+        </tr>
         <tr><td><span class="badge post">POST</span></td>  <td><code>/auth/logout</code></td>    <td>Clear session</td><td>Yes</td><td>-</td></tr>
         <tr><td><span class="badge get">GET</span></td>    <td><code>/auth/me</code></td>        <td>Get profile</td><td>Yes</td><td>-</td></tr>
       </tbody>
