@@ -22,14 +22,16 @@ const SERVER_HEADER = 'usj-http-server/1.0';
  * @returns {string} serialized HTTP response
  */
 function makeResponse(statusCode, statusText, data, extraHeaders = {}) {
-  const body = JSON.stringify(data, null, 2);
-  const etag  = `"${crypto.createHash('md5').update(body).digest('hex')}"`;
+  const rawBody = JSON.stringify(data, null, 2);
+  const bodyBuf = Buffer.from(rawBody, 'utf8');
+  const body = bodyBuf.toString('binary');
+  const etag  = `"${crypto.createHash('md5').update(bodyBuf).digest('hex')}"`;
   return serializeResponse({
     statusCode,
     statusText,
     headers: {
-      'Content-Type': 'application/json',
-      'Content-Length': Buffer.byteLength(body),
+      'Content-Type': 'application/json; charset=utf-8',
+      'Content-Length': bodyBuf.length,
       'ETag': etag,
       'Last-Modified': new Date().toUTCString(),
       'X-Powered-By': SERVER_HEADER,
@@ -89,7 +91,8 @@ function makeNotModified(etag) {
  * @returns {string} quoted ETag, e.g. `"abc123"`
  */
 function computeETag(data) {
-  return `"${crypto.createHash('md5').update(JSON.stringify(data)).digest('hex')}"`;
+  const bodyBuf = Buffer.from(JSON.stringify(data), 'utf8');
+  return `"${crypto.createHash('md5').update(bodyBuf).digest('hex')}"`;
 }
 
 /**

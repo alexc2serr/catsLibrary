@@ -74,14 +74,14 @@
     <h2>📡 API Endpoints</h2>
     <table>
       <thead>
-        <tr><th>Method</th><th>Path</th><th>Description</th></tr>
+        <tr><th>Method</th><th>Path</th><th>Description</th><th>Auth</th><th>Body Example</th></tr>
       </thead>
       <tbody>
-        <tr><td><span class="badge get">GET</span></td>    <td><code>/api/cats</code></td>         <td>List all cats</td></tr>
-        <tr><td><span class="badge get">GET</span></td>    <td><code>/api/cats/:id</code></td>      <td>Get a cat by ID</td></tr>
-        <tr><td><span class="badge post">POST</span></td>  <td><code>/api/cats</code></td>         <td>Create a new cat</td></tr>
-        <tr><td><span class="badge put">PUT</span></td>    <td><code>/api/cats/:id</code></td>      <td>Update a cat</td></tr>
-        <tr><td><span class="badge delete">DELETE</span></td><td><code>/api/cats/:id</code></td>   <td>Delete a cat</td></tr>
+        <tr><td><span class="badge get">GET</span></td>    <td><code>/api/cats</code></td>         <td>List all cats</td><td>Yes</td><td>-</td></tr>
+        <tr><td><span class="badge get">GET</span></td>    <td><code>/api/cats/:id</code></td>      <td>Get a cat by ID</td><td>Yes</td><td>-</td></tr>
+        <tr><td><span class="badge post">POST</span></td>  <td><code>/api/cats</code></td>         <td>Create a new cat</td><td>Yes</td><td><code style="font-size:0.75rem">{"name":"...","breed":"..."}</code></td></tr>
+        <tr><td><span class="badge put">PUT</span></td>    <td><code>/api/cats/:id</code></td>      <td>Update a cat</td><td>Yes</td><td><code style="font-size:0.75rem">{"name":"...","breed":"..."}</code></td></tr>
+        <tr><td><span class="badge delete">DELETE</span></td><td><code>/api/cats/:id</code></td>   <td>Delete a cat</td><td>Yes</td><td>-</td></tr>
       </tbody>
     </table>
   </div>
@@ -91,13 +91,13 @@
     <p style="margin-bottom: 12px">All <code>/api/*</code> routes require one of: <code>X-API-Key</code>, <code>Authorization: Bearer</code>, or a session cookie.</p>
     <table>
       <thead>
-        <tr><th>Method</th><th>Path</th><th>Description</th></tr>
+        <tr><th>Method</th><th>Path</th><th>Description</th><th>Auth</th><th>Body Example</th></tr>
       </thead>
       <tbody>
-        <tr><td><span class="badge post">POST</span></td>  <td><code>/auth/register</code></td>  <td>Register a new user</td></tr>
-        <tr><td><span class="badge post">POST</span></td>  <td><code>/auth/login</code></td>     <td>Login and receive session token</td></tr>
-        <tr><td><span class="badge post">POST</span></td>  <td><code>/auth/logout</code></td>    <td>Logout and clear session</td></tr>
-        <tr><td><span class="badge get">GET</span></td>    <td><code>/auth/me</code></td>        <td>Get current user profile</td></tr>
+        <tr><td><span class="badge post">POST</span></td>  <td><code>/auth/register</code></td>  <td>Register user</td><td>No</td><td><code style="font-size:0.75rem">{"username":"...","password":"..."}</code></td></tr>
+        <tr><td><span class="badge post">POST</span></td>  <td><code>/auth/login</code></td>     <td>Login (get token)</td><td>No</td><td><code style="font-size:0.75rem">{"username":"...","password":"..."}</code></td></tr>
+        <tr><td><span class="badge post">POST</span></td>  <td><code>/auth/logout</code></td>    <td>Clear session</td><td>Yes</td><td>-</td></tr>
+        <tr><td><span class="badge get">GET</span></td>    <td><code>/auth/me</code></td>        <td>Get profile</td><td>Yes</td><td>-</td></tr>
       </tbody>
     </table>
   </div>
