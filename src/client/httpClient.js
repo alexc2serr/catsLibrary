@@ -166,7 +166,7 @@ function request({
     // Build headers
     const allHeaders = {
       Host:       port === 80 ? host : `${host}:${port}`,
-      Connection: 'keep-alive',
+      Connection: 'close',
       ...headers,
     };
 
