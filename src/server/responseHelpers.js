@@ -91,7 +91,7 @@ function makeNotModified(etag) {
  * @returns {string} quoted ETag, e.g. `"abc123"`
  */
 function computeETag(data) {
-  const bodyBuf = Buffer.from(JSON.stringify(data), 'utf8');
+  const bodyBuf = Buffer.from(JSON.stringify(data, null, 2), 'utf8');
   return `"${crypto.createHash('md5').update(bodyBuf).digest('hex')}"`;
 }
 

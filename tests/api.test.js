@@ -177,7 +177,7 @@ describe('Conditional GET (ETag)', () => {
       ...SERVER, method: 'GET', path: '/api/cats', apiKey: KEY,
       headers: { 'If-None-Match': etag },
     });
-    assert.equal(second.statusCode, 304);
+    if (second.statusCode !== 304) console.log('ETAG DEBUG:', etag, second.statusCode, second.headers); assert.equal(second.statusCode, 304);
   });
 
   test('If-None-Match with stale ETag → 200', async () => {

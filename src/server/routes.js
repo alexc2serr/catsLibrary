@@ -112,9 +112,10 @@ module.exports.catStore = catStore;
 function getAllCats(reqHeaders) {
   // Return lightweight list (no photo data in list view)
   const data = catStore.map(({ photo, photoMime, ...rest }) => rest);
-  const etag = computeETag(data);
-  if (isCacheHit(reqHeaders, etag)) return makeNotModified(etag);
-  return makeResponse(200, "OK", { success: true, count: data.length, data });
+  const payload = { success: true, count: data.length, data };
+  const etag = computeETag(payload);
+  console.log('ETAG DEBUG SERVER:', etag, reqHeaders['if-none-match']); if (isCacheHit(reqHeaders, etag)) return makeNotModified(etag);
+  return makeResponse(200, "OK", payload);
 }
 
 /** GET /api/cats/:id */
@@ -128,17 +129,19 @@ function getCatById(id, reqHeaders) {
 
   const { photo, photoMime, ...catData } = cat;
   const hasPhoto = !!photo;
-  const etag = computeETag({ ...catData, hasPhoto });
-  if (isCacheHit(reqHeaders, etag)) return makeNotModified(etag);
-
-  return makeResponse(200, "OK", {
+  const payload = {
     success: true,
     data: {
       ...catData,
       hasPhoto,
       photoUrl: hasPhoto ? `/api/cats/${id}/photo` : null,
     },
-  });
+  };
+
+  const etag = computeETag(payload);
+  if (isCacheHit(reqHeaders, etag)) return makeNotModified(etag);
+
+  return makeResponse(200, "OK", payload);
 }
 
 /** POST /api/cats */
