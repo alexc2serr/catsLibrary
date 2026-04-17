@@ -12,6 +12,9 @@
 
 "use strict";
 
+const fs = require('fs');
+const path = require('path');
+
 const { serializeResponse } = require("../shared/httpParser");
 const {
   makeResponse,
@@ -71,6 +74,34 @@ let catStore = [
   },
 ];
 
+// ─── Load Default Images ─────────────────────────────────────────────────────
+function loadDefaultCatImage(id) {
+  const extMap = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.svg': 'image/svg+xml',
+    '.webp': 'image/webp'
+  };
+  for (const [ext, mime] of Object.entries(extMap)) {
+    const filePath = path.join(__dirname, '..', '..', 'public', 'assets', `cat${id}${ext}`);
+    if (fs.existsSync(filePath)) {
+      try {
+        return {
+          photo: fs.readFileSync(filePath).toString('base64'),
+          photoMime: mime
+        };
+      } catch(e) { console.error('Error reading default image:', e); }
+    }
+  }
+  return { photo: null, photoMime: null };
+}
+
+for (let cat of catStore) {
+  const defaults = loadDefaultCatImage(cat.id);
+  cat.photo = defaults.photo;
+  cat.photoMime = defaults.photoMime;
+}
 
 /** Expose catStore so ownerRoutes can share the same reference */
 module.exports.catStore = catStore;

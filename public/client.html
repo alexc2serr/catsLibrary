@@ -433,10 +433,38 @@ async function loadCats() {
   if (!result.ok || !result.data.data) { grid.innerHTML = '<p style="color:var(--red)">Failed to load cats</p>'; return; }
   grid.innerHTML = result.data.data.map(c => `
     <div class="cat-card" onclick="selectCat(${c.id})">
-      <div class="cat-id">ID: ${c.id}</div>
-      <div class="cat-name">${c.name}</div>
-      <div class="cat-meta">${c.breed} · ${c.age ?? '?'} yrs · ${c.color ?? '–'}</div>
+      <div style="display:flex; gap:12px; align-items:center;">
+        <div style="flex:1;">
+          <div class="cat-id">ID: ${c.id}</div>
+          <div class="cat-name">${c.name}</div>
+          <div class="cat-meta">${c.breed} · ${c.age ?? '?'} yrs · ${c.color ?? '–'}</div>
+        </div>
+        <div id="cat-photo-container-${c.id}" style="width:50px; height:50px; border-radius:6px; overflow:hidden; background:var(--bg2); display:flex; align-items:center; justify-content:center; border:1px solid var(--border); flex-shrink:0;" title="Load Photo">
+          <button onclick="event.stopPropagation(); loadCatPhoto(${c.id})" style="background:none; border:none; cursor:pointer; font-size:1.5rem; display:flex; align-items:center; justify-content:center; width:100%; height:100%;">📷</button>
+        </div>
+      </div>
     </div>`).join('');
+}
+
+async function loadCatPhoto(id) {
+  const container = document.getElementById(`cat-photo-container-${id}`);
+  container.innerHTML = '<div class="loader active" style="width:14px; height:14px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .6s linear infinite; display:inline-block;"></div>';
+  
+  const headers = { 'X-API-Key': API_KEY };
+  if (sessionToken) headers['X-Session-Token'] = sessionToken;
+  
+  try {
+    const resp = await fetch(`/api/cats/${id}/photo`, { headers });
+    if (resp.ok) {
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      container.innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover; cursor:zoom-in;" alt="Cat ${id}" onclick="event.stopPropagation(); openPhotoModal('${url}')" />`;
+    } else {
+      container.innerHTML = '<span style="font-size:.65rem; color:var(--muted)">None</span>';
+    }
+  } catch (err) {
+    container.innerHTML = '<span style="font-size:.65rem; color:var(--red)">Err</span>';
+  }
 }
 
 function selectCat(id) {
@@ -577,6 +605,31 @@ async function getMe() {
 
 // ── Init ─────────────────────────────────────────────────────────────────────
 loadCats();
+</script>
+
+<!-- Photo Modal -->
+<div id="photo-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(11,15,26,0.85); backdrop-filter:blur(5px); z-index:9999; align-items:center; justify-content:center; cursor:zoom-out; opacity:0; transition:opacity 0.2s ease;" onclick="closePhotoModal()">
+  <img id="photo-modal-img" style="max-width:90%; max-height:90%; border-radius:12px; box-shadow:0 20px 40px rgba(0,0,0,0.5); transform:scale(0.95); transition:transform 0.2s ease;" />
+</div>
+
+<script>
+  function openPhotoModal(url) {
+    const modal = document.getElementById('photo-modal');
+    const img = document.getElementById('photo-modal-img');
+    img.src = url;
+    modal.style.display = 'flex';
+    // Trigger reflow for animation
+    void modal.offsetWidth;
+    modal.style.opacity = '1';
+    img.style.transform = 'scale(1)';
+  }
+  function closePhotoModal() {
+    const modal = document.getElementById('photo-modal');
+    const img = document.getElementById('photo-modal-img');
+    modal.style.opacity = '0';
+    img.style.transform = 'scale(0.95)';
+    setTimeout(() => { modal.style.display = 'none'; }, 200);
+  }
 </script>
 </body>
 </html>
