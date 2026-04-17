@@ -511,15 +511,10 @@ authenticate(parsedReq)     // may short-circuit with 401
 
 ## Work Distribution
 
-> *Fill in your team members and their contributions before submission.*
-
-| Member | Primary Responsibility |
-|--------|----------------------|
-| — | — |
-| — | — |
-| — | — |
-| — | — |
-| — | — |
+**Team members:**
+- Alejandro Serrano
+- Alba Prats
+- Tomas Juan
 
 **Methodology**: Agile-inspired with weekly sync meetings. Feature branches in Git, reviewed before merge to `main`. Logging added as the first feature to make debugging all subsequent features easier.
 
@@ -534,6 +529,13 @@ authenticate(parsedReq)     // may short-circuit with 401
 5. **Content negotiation**: `Accept:` header handling to return XML or MessagePack in addition to JSON
 6. **Port configuration via CLI arg**: `node src/server/httpServer.js --port 8080`
 7. **Chunked streaming**: For endpoints returning large datasets, send chunks as they are computed rather than buffering the full response
+
+---
+
+## Disclaimer
+
+This project was developed by a team of students for educational purposes. It is not intended for production use and has not been security tested.
+AI was used to generate this Readme Structure.  
 
 ---
 
