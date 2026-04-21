@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐱 catsLibrary - Wiki Completa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-primary: #0b0f1a;
+            --bg-secondary: #131828;
+            --bg-tertiary: #1a2235;
+            --bg-hover: #232d45;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: #232d45;
+            --accent: #6366f1;
+            --accent-hover: #818cf8;
+            --success: #22d3a5;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --sidebar-width: 280px;
+            --right-sidebar-width: 280px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow: hidden;
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--bg-primary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow-y: auto;
+            z-index: 10;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        .sidebar-header {
+            padding: 24px;
+            font-size: 15px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        .sidebar-header i { color: var(--accent); font-size: 20px; }
+        .sidebar-header span { color: var(--text-primary); font-weight: 700; letter-spacing: -0.5px;}
+
+        .nav-section { margin-bottom: 24px; }
+        .nav-section-title {
+            padding: 8px 24px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-link {
+            display: block;
+            padding: 8px 24px 8px 32px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+        }
+        .nav-link:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+        .nav-link.active {
+            color: var(--accent-hover);
+            background-color: var(--bg-tertiary);
+            border-left-color: var(--accent);
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            background-color: var(--bg-secondary);
+            scroll-behavior: smooth;
+        }
+
+        .content {
+            padding: 50px 80px;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .breadcrumb {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+        .breadcrumb span { color: var(--accent-hover); }
+
+        h1 { font-size: 36px; font-weight: 700; margin-bottom: 30px; letter-spacing: -1px; color: #fff;}
+        h2 { font-size: 24px; font-weight: 600; margin: 48px 0 24px 0; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); scroll-margin-top: 40px; color: #fff;}
+        h3 { font-size: 18px; font-weight: 600; margin: 32px 0 16px 0; scroll-margin-top: 40px; color: var(--text-primary);}
+        p { margin-bottom: 18px; color: var(--text-secondary); }
+        strong { color: var(--text-primary); font-weight: 600;}
+
+        /* Right Sidebar */
+        .right-sidebar {
+            width: var(--right-sidebar-width);
+            background-color: var(--bg-primary);
+            border-left: 1px solid var(--border-color);
+            padding: 30px 24px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .toc-title { font-size: 12px; font-weight: 700; margin-bottom: 16px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;}
+        .toc-list { list-style: none; padding: 0; }
+        .toc-item { margin-bottom: 12px; }
+        .toc-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            transition: color 0.2s;
+            display: block;
+            line-height: 1.5;
+        }
+        .toc-link:hover, .toc-link.active { color: var(--accent-hover); }
+        .toc-sub-list { list-style: none; padding-left: 16px; margin-top: 8px; border-left: 1px solid var(--border-color); margin-left: 6px;}
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--bg-tertiary);
+            padding: 3px 6px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--accent-hover);
+        }
+
+        pre {
+            background-color: var(--bg-primary) !important;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            overflow-x: auto;
+            margin-bottom: 24px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            font-size: 13px;
+            color: var(--text-primary);
+            border: none;
+        }
+
+        table { width: 100%; border-collapse: separate; border-spacing: 0; margin-bottom: 24px; font-size: 14px; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden;}
+        th, td { padding: 14px 20px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { font-weight: 600; color: var(--text-primary); background-color: var(--bg-tertiary); }
+        tr:last-child td { border-bottom: none; }
+        td { color: var(--text-secondary); }
+
+        ul, ol { margin-bottom: 20px; padding-left: 24px; color: var(--text-secondary); }
+        li { margin-bottom: 10px; }
+        li::marker { color: var(--accent); }
+
+        .section-content { display: none; animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .section-content.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            margin-right: 12px;
+        }
+        .badge.get { background-color: rgba(99, 102, 241, 0.15); color: var(--accent-hover); border: 1px solid rgba(99, 102, 241, 0.3);}
+        .badge.post { background-color: rgba(34, 211, 165, 0.15); color: var(--success); border: 1px solid rgba(34, 211, 165, 0.3);}
+        .badge.put { background-color: rgba(251, 191, 36, 0.15); color: var(--warning); border: 1px solid rgba(251, 191, 36, 0.3);}
+        .badge.delete { background-color: rgba(248, 113, 113, 0.15); color: var(--danger); border: 1px solid rgba(248, 113, 113, 0.3);}
+
+        .callout {
+            background-color: rgba(99, 102, 241, 0.05);
+            border-left: 4px solid var(--accent);
+            padding: 20px;
+            border-radius: 0 12px 12px 0;
+            margin-bottom: 24px;
+        }
+        .callout h4 { margin-bottom: 8px; color: var(--text-primary); font-size: 15px;}
+        .callout p { margin: 0; color: var(--text-secondary); font-size: 14px;}
+        
+        .image-placeholder {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-hover));
+            border-radius: 12px;
+            border: 1px dashed var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            font-weight: 500;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Left Sidebar -->
+    <aside class="sidebar left-sidebar">
+        <div class="sidebar-header">
+            <i class="fa-solid fa-cat"></i>
+            catsLibrary <span>Wiki</span>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Overview</div>
+            <a class="nav-link active" data-target="overview">Getting Started</a>
+            <a class="nav-link" data-target="architecture">Architecture & Data Flow</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Core HTTP Protocol</div>
+            <a class="nav-link" data-target="http-parser">HTTP Parser (RFC 9112)</a>
+            <a class="nav-link" data-target="tcp-server">Raw TCP Socket Server</a>
+            <a class="nav-link" data-target="tls-server">TLS & Framework Bridge</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Backend Services</div>
+            <a class="nav-link" data-target="auth-routes">Authentication System</a>
+            <a class="nav-link" data-target="cats-api">Cats API (Core Resource)</a>
+            <a class="nav-link" data-target="owners-api">Owners API (Relations)</a>
+            <a class="nav-link" data-target="middleware">Middleware & Logging</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Client Tools</div>
+            <a class="nav-link" data-target="client-tools">Terminal CLI Client</a>
+            <a class="nav-link" data-target="gui-client">Browser SPA Client</a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Engineering</div>
+            <a class="nav-link" data-target="rfc-compliance">RFC Compliance Specs</a>
+            <a class="nav-link" data-target="design-decisions">System Design Decisions</a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-container" id="main-scroll">
+        <div class="content">
+
+            <!-- Section: Getting Started -->
+            <div id="overview" class="section-content active">
+                <div class="breadcrumb">catsLibrary / <span>Getting Started</span></div>
+                <h1>Project Overview</h1>
+                
+                <p class="lead"><strong>catsLibrary</strong> (internal name: <code>usj-http-project</code>) is a ground-up implementation of a full HTTP/1.1 client and server stack, written entirely in Node.js utilizing only lower-level transport primitives (<code>net.Socket</code>).</p>
+                
+                <p>By strictly avoiding high-level abstractions such as Express, Axios, or even the native Node.js <code>http</code> module, this project serves as an extensive study in network protocols, buffer management, socket lifetimes, and RFC compliance.</p>
+                
+                <div class="callout">
+                    <h4>The Application Domain</h4>
+                    <p>On top of this custom HTTP stack, the project implements a fully functional RESTful API for a Cat Shelter application. It supports complex features like relational CRUD operations, file uploads (binary and Base64), and robust session-based authentication.</p>
+                </div>
+
+                <h2 id="core-objectives">Core Engineering Objectives</h2>
+                <ul>
+                    <li><strong>Protocol Mastery:</strong> Implement HTTP/1.1 message parsing, handling chunked transfer encoding, and Content-Length framing from raw bytes.</li>
+                    <li><strong>Resource Management:</strong> Properly manage persistent socket connections (keep-alive) and idle timeouts to prevent resource leaks.</li>
+                    <li><strong>Security:</strong> Implement robust password hashing (PBKDF2), timing-safe comparisons, and secure session cookies.</li>
+                    <li><strong>Tooling:</strong> Provide both a CLI and a beautiful browser-based GUI to interact with the raw server.</li>
+                </ul>
+
+                <h2 id="tech-stack">Technology Stack</h2>
+                <p>The codebase is intentionally austere to demonstrate fundamental principles:</p>
+                <ul>
+                    <li><strong>Runtime:</strong> Node.js 18+</li>
+                    <li><strong>Language:</strong> Vanilla JavaScript (CommonJS modules)</li>
+                    <li><strong>Transport Layer:</strong> <code>net</code> and <code>tls</code> native modules.</li>
+                    <li><strong>Cryptography:</strong> <code>crypto</code> native module for hashing and tokens.</li>
+                    <li><strong>Testing:</strong> Native <code>node:test</code> and <code>node:assert</code>.</li>
+                    <li><strong>Dependencies:</strong> Zero runtime dependencies for the core protocol. Express is only included as a secondary target to prove protocol interoperability.</li>
+                </ul>
+            </div>
+
+            <!-- Section: Architecture -->
+            <div id="architecture" class="section-content">
+                <div class="breadcrumb">catsLibrary / <span>Architecture & Data Flow</span></div>
+                <h1>System Architecture</h1>
+                
+                <p>The project is logically separated into a shared protocol parsing layer, a server implementation, and two distinct client implementations.</p>
+
+                <h2 id="directory-structure">Detailed Directory Structure</h2>
+                <pre><code class="language-text">usj-http-project/
+├── src/
+│   ├── shared/
+│   │   └── httpParser.js        # Core RFC 9112 parser & serializer logic
+│   ├── server/
+│   │   ├── httpServer.js        # Raw TCP server managing socket lifecycles
+│   │   ├── httpServerTLS.js     # Secure variant wrapping tls.createServer
+│   │   ├── routes.js            # Business logic for Cats CRUD
+│   │   ├── ownerRoutes.js       # Business logic for Owners CRUD
+│   │   ├── authRoutes.js        # Authentication & Session logic
+│   │   ├── middleware.js        # Request interceptors (Logs, Auth validation)
+│   │   └── responseHelpers.js   # Utility for ETag hashing and headers
+│   └── client/
+│       ├── httpClient.js        # Raw TCP client library + CookieJar
+│       └── index.js             # Interactive Terminal CLI
+├── public/
+│   ├── client.html              # Browser GUI client (SPA)
+├── scripts/
+│   └── generateCerts.js         # Automation for self-signed TLS certs
+└── tests/
+    └── api.test.js              # Full automated integration test suite</code></pre>
+
+                <h2 id="request-flow">Request Lifecycle (Data Flow)</h2>
+                <p>When a client initiates a connection to <code>127.0.0.1:3000</code>, the data flows through several distinct architectural layers before a response is returned.</p>
+
+                <pre><code class="language-text">┌───────────────────────────┐
+│       TCP Socket          │  &lt;-- Raw byte stream received
+└─────────────┬─────────────┘
+              │
+              ▼
+┌───────────────────────────┐
+│ httpParser.parseRequest() │  &lt;-- Buffer accumulated. CRLF framed.
+└─────────────┬─────────────┘      Headers parsed. Body decoded if Chunked.
+              │
+              ▼
+┌───────────────────────────┐
+│ middleware.logRequest()   │  &lt;-- Intercepted. Apache Combined Log written.
+└─────────────┬─────────────┘
+              │
+              ▼
+┌───────────────────────────┐
+│ middleware.authenticate() │  &lt;-- Intercepted. Checks X-API-Key or Cookie.
+└─────────────┬─────────────┘      Fails fast with 401 Unauthorized if bad.
+              │
+              ▼
+┌───────────────────────────┐
+│      Route Handlers       │  &lt;-- Dispatched based on Method and Path.
+│  (/auth, /api/cats, etc)  │      Executes core business logic.
+└─────────────┬─────────────┘
+              │
+              ▼
+┌───────────────────────────┐
+│ httpParser.serialize()    │  &lt;-- ETag hashed. Content-Length injected.
+└─────────────┬─────────────┘      Headers formatted with CRLF_DOUBLE.
+              │
+              ▼
+┌───────────────────────────┐
+│       TCP Socket          │  &lt;-- Byte string flushed. Socket kept alive
+└───────────────────────────┘      or closed if Connection: close.</code></pre>
+
+            </div>
+
+            <!-- Section: HTTP Parser -->
+            <div id="http-parser" class="section-content">
+                <div class="breadcrumb">catsLibrary / Core HTTP Protocol / <span>HTTP Parser</span></div>
+                <h1>HTTP Parser Deep Dive</h1>
+                <p>The <code>src/shared/httpParser.js</code> file is the crown jewel of the networking logic. Because we don't rely on Node's HTTP module, we must manually execute string manipulation and buffer reading to understand HTTP/1.1 semantics.</p>
+                
+                <h2 id="request-parsing">1. Raw String Parsing</h2>
+                <p>The parser uses the strict `\r\n\r\n` (Double CRLF) delimiter to separate the HTTP header section from the HTTP body payload.</p>
+                
+                <pre><code class="language-javascript">const CRLF_DOUBLE = '\r\n\r\n';
+
+function parseRequest(rawRequest) {
+  const headerBodySplit = rawRequest.indexOf(CRLF_DOUBLE);
+  if (headerBodySplit === -1) {
+    throw new Error('Malformed HTTP request: missing header/body separator');
+  }
+
+  const headerSection = rawRequest.substring(0, headerBodySplit);
+  let body = rawRequest.substring(headerBodySplit + 4);
+  
+  // ... continued parsing logic ...
+}</code></pre>
+
+                <h2 id="header-parsing">2. Multi-Value Headers</h2>
+                <p>RFC 9112 specifies that multiple headers with the same name (like <code>Set-Cookie</code>) must be preserved. Our <code>parseHeaders</code> function correctly dynamically upgrades singular values into arrays.</p>
+
+                <pre><code class="language-javascript">if (headers[name] !== undefined) {
+  // Upgrade to array to preserve multiple identical headers
+  headers[name] = [].concat(headers[name], value);
+} else {
+  headers[name] = value;
+}</code></pre>
+
+                <h2 id="chunked-transfer">3. Chunked Transfer-Encoding</h2>
+                <p>For payloads of unknown length or extremely large datasets, HTTP uses <code>Transfer-Encoding: chunked</code>. This splits the body into multiple pieces, each prefixed by its hexadecimal size.</p>
+                
+                <div class="callout">
+                    <h4>Decoding Algorithm</h4>
+                    <p>Our <code>decodeChunked</code> algorithm reads the first string until CRLF, parses it via <code>parseInt(line, 16)</code> to determine the chunk size, reads exactly that many bytes, skips the trailing CRLF, and repeats until a chunk size of <code>0</code> is encountered.</p>
+                </div>
+
+                <pre><code class="language-javascript">function decodeChunked(chunkedBody) {
+  let result = '';
+  let remaining = chunkedBody;
+
+  while (remaining.length > 0) {
+    const crlfIdx = remaining.indexOf('\r\n');
+    const sizeLine = remaining.substring(0, crlfIdx).split(';')[0];
+    const chunkSize = parseInt(sizeLine, 16);
+    
+    if (isNaN(chunkSize) || chunkSize === 0) break; // last-chunk
+
+    const chunkStart = crlfIdx + 2;
+    result += remaining.substring(chunkStart, chunkStart + chunkSize);
+    remaining = remaining.substring(chunkStart + chunkSize + 2);
+  }
+  return result;
+}</code></pre>
+            </div>
+
+            <!-- Section: Raw TCP Server -->
+            <div id="tcp-server" class="section-content">
+                <div class="breadcrumb">catsLibrary / Core HTTP Protocol / <span>TCP Server</span></div>
+                <h1>Raw TCP Socket Server</h1>
+                
+                <p>Implemented in <code>src/server/httpServer.js</code>. This server manages raw TCP sockets using <code>net.createServer</code>. It is responsible for accumulating bytes over the network until a complete HTTP request is formed.</p>
+                
+                <h2 id="buffer-accumulation">1. Socket Data Buffering</h2>
+                <p>Because TCP is a stream protocol, a single HTTP request might arrive in multiple <code>data</code> events. The server maintains a buffer string for each socket.</p>
+
+                <pre><code class="language-javascript">server.on('connection', (socket) => {
+  let buffer = Buffer.alloc(0);
+
+  socket.on('data', (chunk) => {
+    buffer = Buffer.concat([buffer, chunk]);
+    
+    // Check if headers are fully received
+    const splitIdx = buffer.indexOf('\r\n\r\n');
+    if (splitIdx === -1) return; // Keep waiting for more data
+    
+    // Extract Content-Length to determine if body is fully received
+    const expectedLength = parseContentLength(buffer);
+    const bodyLength = buffer.length - (splitIdx + 4);
+    
+    if (bodyLength >= expectedLength) {
+      // Request is fully received! We can now process it.
+      handleRequest(socket, buffer.toString('utf8'));
+      buffer = Buffer.alloc(0); // Reset for next keep-alive request
+    }
+  });
+});</code></pre>
+
+                <h2 id="keep-alive">2. Persistent Connections (Keep-Alive)</h2>
+                <p>To improve latency, HTTP/1.1 uses persistent connections by default. The server checks the parsed <code>Connection</code> header.</p>
+                <ul>
+                    <li>If it equals <code>close</code>, we call <code>socket.end()</code> after writing the response.</li>
+                    <li>Otherwise, we inject <code>Connection: keep-alive</code> into the response and keep the socket open.</li>
+                </ul>
+
+                <div class="callout">
+                    <h4>Idle Timeout Defense</h4>
+                    <p>To prevent malicious clients from holding sockets open indefinitely (Slowloris attack), the server attaches a 30-second timeout to the socket using <code>socket.setTimeout(30000)</code>. If no data arrives, the socket is forcibly destroyed.</p>
+                </div>
+                
+                <h2 id="binary-data">3. Handling Binary Data (Images)</h2>
+                <p>When clients upload cat photos (using binary bodies rather than base64), standard UTF-8 parsing corrupts the bytes. The server detects <code>Content-Type: image/*</code> and avoids calling <code>.toString('utf8')</code> on the body, preserving the raw binary Buffer for file storage.</p>
+
+            </div>
+
+            <!-- Section: TLS Server -->
+            <div id="tls-server" class="section-content">
+                <div class="breadcrumb">catsLibrary / Core HTTP Protocol / <span>TLS Server</span></div>
+                <h1>TLS Security & Express Bridge</h1>
+                
+                <h2 id="tls-implementation">TLS Secure Server (HTTPS)</h2>
+                <p>While the standard server runs on unencrypted TCP, we implemented a secure variant in <code>httpServerTLS.js</code>. This utilizes Node.js's <code>tls</code> module.</p>
+                
+                <p><strong>Certificate Generation:</strong><br>
+                We use an automated script <code>scripts/generateCerts.js</code> which spawns an <code>openssl</code> process to generate a self-signed RSA-2048 keypair.</p>
+
+                <pre><code class="language-javascript">const tls = require('tls');
+const options = {
+  key: fs.readFileSync('certs/server.key'),
+  cert: fs.readFileSync('certs/server.cert')
+};
+
+const secureServer = tls.createServer(options, (socket) => {
+  // The exact same buffering and HTTP parsing logic from httpServer.js is injected here!
+  attachHttpHandlers(socket); 
+});
+secureServer.listen(3443);</code></pre>
+
+                <h2 id="express-refactor">Express Interoperability Bridge</h2>
+                <p>To definitively prove that our custom <code>httpClient.js</code> is 100% RFC compliant, we built <code>httpServerExpress.js</code>. This server exposes the identical REST API using the popular Express.js framework.</p>
+                <p>You can start it on port 3001, point the CLI client to it, and all commands (CRUD, Auth, Cookies, Photo Uploads) will work flawlessly, proving our custom client speaks perfect standard HTTP.</p>
+            </div>
+
+            <!-- Section: Auth Routes -->
+            <div id="auth-routes" class="section-content">
+                <div class="breadcrumb">catsLibrary / Backend Services / <span>Authentication System</span></div>
+                <h1>Authentication & Session System</h1>
+                <p>Security is paramount. The <code>authRoutes.js</code> module manages user registration, secure password hashing, and session persistence.</p>
+
+                <h2 id="password-crypto">1. Cryptography & Hashing</h2>
+                <p>Passwords are <strong>never</strong> stored in plaintext. We utilize PBKDF2 (Password-Based Key Derivation Function 2) with HMAC-SHA256.</p>
+                <ul>
+                    <li><strong>Salt:</strong> 16 bytes of random data per user.</li>
+                    <li><strong>Iterations:</strong> 100,000 iterations to deliberately slow down brute-force attacks.</li>
+                    <li><strong>Key Length:</strong> 64 bytes.</li>
+                </ul>
+
+                <pre><code class="language-javascript">const crypto = require('crypto');
+
+function hashPassword(password, salt) {
+  return crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha256').toString('hex');
+}
+
+// During Login: Preventing Timing Attacks
+const inputHash = hashPassword(reqPassword, user.salt);
+const isValid = crypto.timingSafeEqual(
+  Buffer.from(inputHash), 
+  Buffer.from(user.hash)
+);</code></pre>
+
+                <h2 id="session-tokens">2. Session Tokens & Cookies</h2>
+                <p>Upon successful login, a cryptographically secure 32-byte token is generated. This token is mapped to the user ID in server memory.</p>
+                
+                <p>The server delivers this token back to the client via the <code>Set-Cookie</code> header with strict security directives:</p>
+                <pre><code class="language-http">Set-Cookie: sessionToken=abc123def456...; HttpOnly; Path=/; Max-Age=3600; SameSite=Strict</code></pre>
+                
+                <p>Because it is <code>HttpOnly</code>, malicious JavaScript running in the browser (XSS) cannot steal the token.</p>
+
+                <h2 id="endpoints">Endpoints Reference</h2>
+                <table>
+                    <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td><span class="badge post">POST</span></td><td><code>/auth/register</code></td><td>Accepts <code>{username, password}</code>. Returns 201 Created.</td></tr>
+                        <tr><td><span class="badge post">POST</span></td><td><code>/auth/login</code></td><td>Validates credentials. Generates token. Sets Cookie.</td></tr>
+                        <tr><td><span class="badge post">POST</span></td><td><code>/auth/logout</code></td><td>Deletes token from memory. Sets Cookie with Max-Age=0.</td></tr>
+                        <tr><td><span class="badge get">GET</span></td><td><code>/auth/me</code></td><td>Returns profile of currently authenticated user.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Section: Cats API -->
+            <div id="cats-api" class="section-content">
+                <div class="breadcrumb">catsLibrary / Backend Services / <span>Cats API</span></div>
+                <h1>Cats API (Core Resource)</h1>
+                <p>The primary domain logic resides in <code>routes.js</code>, managing the lifecycle of Cat entities.</p>
+                
+                <h2 id="schema">Entity Schema</h2>
+                <pre><code class="language-json">{
+  "id": 1,
+  "name": "Whiskers",
+  "breed": "Domestic Shorthair",
+  "age": 3,
+  "color": "Orange",
+  "ownerId": null,
+  "createdAt": "2025-04-16T12:00:00Z",
+  "updatedAt": "2025-04-16T12:00:00Z"
+}</code></pre>
+
+                <h2 id="rest-mapping">RESTful Mapping</h2>
+                <table>
+                    <thead><tr><th>Method</th><th>Path</th><th>Payload / Action</th></tr></thead>
+                    <tbody>
+                        <tr><td><span class="badge get">GET</span></td><td><code>/api/cats</code></td><td>Returns array of all cats.</td></tr>
+                        <tr><td><span class="badge head">HEAD</span></td><td><code>/api/cats</code></td><td>Returns Headers only (ETag, Content-Length). Used by clients to check for updates without downloading data.</td></tr>
+                        <tr><td><span class="badge get">GET</span></td><td><code>/api/cats/:id</code></td><td>Returns single Cat object. 404 if not found.</td></tr>
+                        <tr><td><span class="badge post">POST</span></td><td><code>/api/cats</code></td><td>Body: <code>{name, breed, ...}</code>. Returns 201 Created.</td></tr>
+                        <tr><td><span class="badge put">PUT</span></td><td><code>/api/cats/:id</code></td><td>Replaces entire entity. Returns 200 OK.</td></tr>
+                        <tr><td><span class="badge delete">DELETE</span></td><td><code>/api/cats/:id</code></td><td>Deletes entity. Returns 204 No Content.</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="conditional-get">Conditional GET & ETag Caching</h2>
+                <p>To save network bandwidth, the server calculates an MD5 hash of the response payload and attaches it as the <code>ETag</code> header.</p>
+                
+                <pre><code class="language-javascript">const eTag = crypto.createHash('md5').update(jsonResponse).digest('hex');
+headers['ETag'] = `"${eTag}"`;
+
+if (request.headers['if-none-match'] === `"${eTag}"`) {
+  // The client's cached version is identical to the current data!
+  return serializeResponse({ statusCode: 304, statusText: 'Not Modified' });
+}</code></pre>
+                <p>If the client sends <code>If-None-Match: "hash"</code> and it matches, the server aborts sending the body and responds with <code>304 Not Modified</code>.</p>
+            </div>
+
+            <!-- Section: Owners API -->
+            <div id="owners-api" class="section-content">
+                <div class="breadcrumb">catsLibrary / Backend Services / <span>Owners API</span></div>
+                <h1>Owners API (Advanced Relational CRUD)</h1>
+                <p>To demonstrate advanced database mapping capabilities, <code>ownerRoutes.js</code> implements a secondary resource with a bidirectional relationship to Cats.</p>
+                
+                <h2 id="relationship">Bidirectional Foreign Keys</h2>
+                <p>Cats contain an <code>ownerId</code> property. When an Owner is requested via <code>GET /api/owners/:id</code>, the server dynamically queries the Cats table and embeds the full Cat objects into the Owner response payload.</p>
+
+                <h2 id="relational-endpoints">Relational Endpoints</h2>
+                <p>Assigning and unassigning cats is handled via specific nested sub-routes, treating the relationship itself as an action.</p>
+                <table>
+                    <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td><span class="badge post">POST</span></td><td><code>/api/owners/:oid/cats/:cid</code></td><td>Assigns Cat <code>:cid</code> to Owner <code>:oid</code>. Updates the <code>ownerId</code> foreign key.</td></tr>
+                        <tr><td><span class="badge delete">DELETE</span></td><td><code>/api/owners/:oid/cats/:cid</code></td><td>Removes the assignment (sets <code>ownerId = null</code>).</td></tr>
+                        <tr><td><span class="badge delete">DELETE</span></td><td><code>/api/owners/:id</code></td><td>Deletes the Owner. Crucially, the server performs a cascading update to unlink all associated cats first to prevent orphaned foreign keys.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Section: Middleware -->
+            <div id="middleware" class="section-content">
+                <div class="breadcrumb">catsLibrary / Backend Services / <span>Middleware</span></div>
+                <h1>Middleware & Logging</h1>
+                <p>The <code>middleware.js</code> file acts as an interceptor pipeline. Before a request ever reaches a route handler (like Cats or Owners), it must pass through the middleware chain.</p>
+                
+                <h2 id="auth-middleware">1. Authentication Interceptor</h2>
+                <p>The <code>authenticate()</code> function protects all routes starting with <code>/api/</code>.</p>
+                <p>It checks three distinct sources in order of precedence:</p>
+                <ol>
+                    <li>The <code>X-API-Key</code> custom header (matched against a hardcoded admin key).</li>
+                    <li>The <code>Authorization: Bearer &lt;token&gt;</code> header.</li>
+                    <li>The parsed <code>Cookie</code> header looking for <code>sessionToken</code>.</li>
+                </ol>
+                <p>If none of these are valid, the middleware short-circuits the pipeline and returns a <code>401 Unauthorized</code> response directly.</p>
+
+                <h2 id="logger-middleware">2. Apache Combined Logger</h2>
+                <p>The <code>logRequest()</code> function records every interaction. It extracts the timestamp, client IP, method, requested path, HTTP version, response status code, content length, and the User-Agent.</p>
+                
+                <pre><code class="language-javascript">function logRequest(req, res, clientIp) {
+  const logLine = `[${new Date().toISOString()}] ${clientIp} "${req.method} ${req.path} HTTP/${req.httpVersion}" ${res.statusCode} ${res.body.length} "-" "${req.headers['user-agent'] || '-'}"\n`;
+  
+  // Asynchronously append to file
+  fs.appendFile('logs/access.log', logLine, (err) => { ... });
+  
+  // Output to stdout with ANSI colors
+  console.log(`\x1b[36m${req.method}\x1b[0m \x1b[32m${res.statusCode}\x1b[0m ${req.path}`);
+}</code></pre>
+            </div>
+
+            <!-- Section: Client Tools Overview -->
+            <div id="client-tools" class="section-content">
+                <div class="breadcrumb">catsLibrary / Client Tools / <span>Terminal CLI</span></div>
+                <h1>Terminal CLI Client</h1>
+                
+                <p>Because standard command-line tools like <code>curl</code> or Postman hide the underlying HTTP mechanics, we built our own native Node.js client logic.</p>
+
+                <h2 id="http-client-library">HTTP Client Library (<code>httpClient.js</code>)</h2>
+                <p>This library connects to servers using <code>net.createConnection()</code>. It mimics the interface of modern libraries (like <code>fetch</code> or Axios) but executes the manual serialization logic built in our <code>httpParser.js</code>.</p>
+                
+                <div class="callout">
+                    <h4>The CookieJar Implementation</h4>
+                    <p>Unlike browsers, raw TCP sockets do not remember cookies between requests. <code>httpClient.js</code> implements a <code>CookieJar</code> class. When it receives a <code>Set-Cookie</code> header, it parses the attributes (Path, Expires, Max-Age), stores it in memory, and automatically injects it as a <code>Cookie:</code> header into all subsequent requests to the same domain.</p>
+                </div>
+
+                <h2 id="cli-interface">Interactive CLI (<code>index.js</code>)</h2>
+                <p>The user-facing terminal interface utilizes Node's <code>readline</code> module to create an interactive menu.</p>
+                <pre><code class="language-text">--- CAT SHELTER CLI ---
+1. List all cats
+2. Get cat by ID
+3. Create new cat
+4. Login
+5. Exit
+Select an option: </code></pre>
+                <p>It visually formats JSON responses and color-codes HTTP status headers for rapid debugging during development.</p>
+
+            </div>
+
+            <!-- Section: Browser GUI Client -->
+            <div id="gui-client" class="section-content">
+                <div class="breadcrumb">catsLibrary / Client Tools / <span>Browser SPA</span></div>
+                <h1>Browser GUI Client</h1>
+                
+                <p>Served natively from <code>public/client.html</code> by our raw TCP server. This Single Page Application (SPA) proves that our custom backend communicates perfectly with the stringent security and formatting requirements of modern web browsers.</p>
+
+                <h2 id="gui-features">Application Features</h2>
+                <ul>
+                    <li><strong>Dark-Themed Layout:</strong> Built with CSS Grid and modern design tokens (matching the visual style of this wiki!).</li>
+                    <li><strong>Stateful Forms:</strong> Provides inputs for Cat and Owner generation, translating UI events into formatted JSON payloads.</li>
+                    <li><strong>Image Previews:</strong> Utilizes the <code>FileReader</code> API to convert selected local images into Base64 Data URLs before dispatching them to the <code>/photo</code> POST endpoint.</li>
+                </ul>
+
+                <h2 id="inspector">The HTTP Inspector Tool</h2>
+                <p>To assist in grading and debugging, the GUI features a live HTTP Inspector panel anchored to the bottom of the screen.</p>
+                <p>Whenever an action is performed, the Inspector intercepts the network trace and displays:</p>
+                <ol>
+                    <li>The raw Request Headers and Payload.</li>
+                    <li>The parsed JSON Response Body.</li>
+                    <li>The raw Response Headers (including ETags, Content-Length, and Keep-Alive stats).</li>
+                </ol>
+            </div>
+
+            <!-- Section: RFC Compliance -->
+            <div id="rfc-compliance" class="section-content">
+                 <div class="breadcrumb">catsLibrary / Engineering / <span>RFC 9112</span></div>
+                 <h1>RFC 9112 Compliance Specifications</h1>
+                 <p>The primary grading criteria for this project is strict adherence to HTTP/1.1 RFC 9112 specifications. Our implementation ensures broad compatibility.</p>
+                 
+                 <table style="margin-top:20px;">
+                    <thead><tr><th>RFC 9112 Requirement</th><th>Section</th><th>Our Technical Implementation</th></tr></thead>
+                    <tbody>
+                    <tr><td><strong>CRLF Framing</strong></td><td>§2.2</td><td><code>httpParser.js</code> uses strict <code>\r\n</code> constants for all line endings and <code>\r\n\r\n</code> to terminate headers.</td></tr>
+                    <tr><td><strong>Request-Line Format</strong></td><td>§3.1</td><td>Method, target, and HTTP-version are split precisely using space delimiters (<code>indexOf(' ')</code>).</td></tr>
+                    <tr><td><strong>Content-Length Calculation</strong></td><td>§6.2</td><td>Server dynamically calculates payload size using <code>Buffer.byteLength(body)</code> to account for multi-byte Unicode characters instead of naive <code>.length</code>.</td></tr>
+                    <tr><td><strong>Transfer-Encoding</strong></td><td>§7.1</td><td>Full bidirectional Chunked encoding/decoding is implemented. The parser successfully strips chunk extensions and trailers.</td></tr>
+                    <tr><td><strong>Partial Body Wait</strong></td><td>§6.2</td><td>The socket buffer loops and waits until <code>buffer.length &gt;= headerLen + Content-Length</code> before firing the route handler.</td></tr>
+                    <tr><td><strong>400 Bad Request</strong></td><td>§9.1.2</td><td>Malformed syntax (e.g. invalid chunk size, missing protocol version) throws an exception caught by the socket wrapper, returning 400.</td></tr>
+                    <tr><td><strong>405 Method Not Allowed</strong></td><td>§9.3</td><td>If a route path matches but the Method does not (e.g., PUT to <code>/api/cats</code>), it returns 405 with the mandatory <code>Allow: GET, POST</code> header.</td></tr>
+                    </tbody>
+                 </table>
+            </div>
+
+            <!-- Section: Design Decisions -->
+            <div id="design-decisions" class="section-content">
+                 <div class="breadcrumb">catsLibrary / Engineering / <span>Design Decisions</span></div>
+                 <h1>System Design Decisions</h1>
+                 
+                 <h2 id="dd-1">1. String vs Buffer Memory Management</h2>
+                 <p><strong>The Challenge</strong>: Managing raw memory efficiently when receiving arbitrary network payloads.</p>
+                 <p><strong>The Decision</strong>: We opted to use Node's <code>Buffer.concat()</code> exclusively while accumulating the payload. We only call <code>.toString('utf8')</code> when we are 100% certain the request is fully formed and ready to be routed. This prevents memory leaks and corruption of binary file uploads.</p>
+
+                 <h2 id="dd-2">2. Dependency Injection for Cross-Module Routing</h2>
+                 <p><strong>The Challenge</strong>: <code>middleware.js</code> needs to validate session tokens, which are generated and managed inside <code>authRoutes.js</code>. Directly importing <code>authRoutes.js</code> into <code>middleware.js</code> created a circular dependency.</p>
+                 <p><strong>The Decision</strong>: We implemented a Dependency Injection pattern. The main <code>httpServer.js</code> bootstrapper pulls the <code>validateToken</code> function from Auth and injects it into Middleware via <code>setTokenValidator(fn)</code> during startup.</p>
+
+                 <h2 id="dd-3">3. ETag Header Injection</h2>
+                 <p><strong>The Challenge</strong>: <code>serializeResponse()</code> formats the final HTTP string. However, calculating the ETag requires the final JSON body. We needed a way to inject headers late in the lifecycle without rebuilding the entire object.</p>
+                 <p><strong>The Decision</strong>: We created an <code>injectHeaders(rawString, headers)</code> utility that uses regex to find the <code>\r\n\r\n</code> boundary and seamlessly splices new headers into the pre-compiled string. This significantly improved performance by avoiding double-serialization.</p>
+
+                 <h2 id="dd-4">4. Avoiding HTTP/2 Upgrade Mechanics</h2>
+                 <p><strong>The Challenge</strong>: Modern clients often request <code>Upgrade: h2c</code>.</p>
+                 <p><strong>The Decision</strong>: Due to the complexity of HPACK and binary framing, our server intentionally ignores Upgrade headers and forces fallback to standard HTTP/1.1 per the project scope.</p>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Right Sidebar -->
+    <aside class="sidebar right-sidebar">
+        <div class="toc-title">On this page</div>
+        <ul class="toc-list" id="toc-container">
+            <!-- TOC dynamically generated by JS -->
+        </ul>
+    </aside>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            hljs.highlightAll();
+
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('.section-content');
+            const tocContainer = document.getElementById('toc-container');
+            const mainScroll = document.getElementById('main-scroll');
+
+            function generateTOC(sectionId) {
+                tocContainer.innerHTML = '';
+                const activeSection = document.getElementById(sectionId);
+                if(!activeSection) return;
+
+                const headings = activeSection.querySelectorAll('h2, h3');
+                let currentH2List = null;
+
+                headings.forEach(heading => {
+                    const id = heading.id || heading.textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                    heading.id = id;
+
+                    const li = document.createElement('li');
+                    li.className = 'toc-item';
+                    
+                    const a = document.createElement('a');
+                    a.className = 'toc-link';
+                    a.href = `#${id}`;
+                    a.textContent = heading.textContent;
+                    
+                    a.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        mainScroll.scrollTo({ top: heading.offsetTop - 50, behavior: 'smooth' });
+                        document.querySelectorAll('.toc-link').forEach(link => link.classList.remove('active'));
+                        a.classList.add('active');
+                    });
+
+                    if (heading.tagName === 'H2') {
+                        li.appendChild(a);
+                        tocContainer.appendChild(li);
+                        currentH2List = document.createElement('ul');
+                        currentH2List.className = 'toc-sub-list';
+                        li.appendChild(currentH2List);
+                    } else if (heading.tagName === 'H3' && currentH2List) {
+                        li.appendChild(a);
+                        currentH2List.appendChild(li);
+                    }
+                });
+            }
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = link.getAttribute('data-target');
+                    
+                    navLinks.forEach(n => n.classList.remove('active'));
+                    link.classList.add('active');
+
+                    sections.forEach(sec => sec.classList.remove('active'));
+                    const targetSection = document.getElementById(targetId);
+                    if (targetSection) {
+                        targetSection.classList.add('active');
+                        generateTOC(targetId);
+                        mainScroll.scrollTop = 0;
+                    }
+                });
+            });
+
+            generateTOC('overview');
+            
+            mainScroll.addEventListener('scroll', () => {
+                const activeSection = document.querySelector('.section-content.active');
+                if(!activeSection) return;
+                
+                const headings = Array.from(activeSection.querySelectorAll('h2, h3'));
+                let currentActiveId = null;
+                
+                for(let i = headings.length - 1; i >= 0; i--) {
+                    if (mainScroll.scrollTop >= (headings[i].offsetTop - 80)) {
+                        currentActiveId = headings[i].id;
+                        break;
+                    }
+                }
+                
+                if(currentActiveId) {
+                    document.querySelectorAll('.toc-link').forEach(link => {
+                        link.classList.remove('active');
+                        if(link.getAttribute('href') === `#${currentActiveId}`) link.classList.add('active');
+                    });
+                } else if(headings.length > 0) {
+                     document.querySelectorAll('.toc-link').forEach(l => l.classList.remove('active'));
+                     const firstLink = document.querySelector(`.toc-link[href="#${headings[0].id}"]`);
+                     if(firstLink) firstLink.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
