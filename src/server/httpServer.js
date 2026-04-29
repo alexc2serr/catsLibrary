@@ -280,8 +280,12 @@ function createServer({ port = 3000, host = "127.0.0.1" } = {}) {
         console.log(
           `\x1b[32m[SERVER]\x1b[0m Listening on \x1b[36mhttp://${host}:${port}\x1b[0m`,
         );
+        console.log(`\x1b[33m[INFO]\x1b[0m  CLI Client → npm run client`);
         console.log(
           `\x1b[33m[INFO]\x1b[0m  GUI Client → http://${host}:${port}/client.html`,
+        );
+        console.log(
+          `\x1b[33m[INFO]\x1b[0m  Quark REST Client (Bruno-like) → http://${host}:${port}/rest-client.html`,
         );
         console.log(
           `\x1b[33m[INFO]\x1b[0m  API auth   → X-API-Key: supersecret-key-123`,
