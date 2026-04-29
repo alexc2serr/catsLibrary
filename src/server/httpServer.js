@@ -22,6 +22,7 @@ const { parseRequest, serializeResponse } = require("../shared/httpParser");
 const { router: catRouter, catStore } = require("./routes");
 const { ownerRouter, setCatStore } = require("./ownerRoutes");
 const { authRouter, validateToken } = require("./authRoutes");
+const { proxyRouter } = require("./proxyRoutes");
 const { logRequest, authenticate, setTokenValidator } = require("./middleware");
 const { makeEmptyResponse } = require("./responseHelpers");
 
@@ -99,7 +100,7 @@ function serveStaticFile(reqPath) {
 
 // ─── Request handler ──────────────────────────────────────────────────────────
 
-function handleRequest(rawData, remoteAddress) {
+async function handleRequest(rawData, remoteAddress) {
   // ── Parse ─────────────────────────────────────────────────────────────────
   let parsedReq;
   try {
@@ -154,11 +155,18 @@ function handleRequest(rawData, remoteAddress) {
   // ── Route chain ───────────────────────────────────────────────────────────
   const connectionHeader = { Connection: keepAlive ? "keep-alive" : "close" };
 
-  const raw =
+  let raw =
     authRouter(parsedReq) ||
     catRouter(parsedReq) ||
-    ownerRouter(parsedReq) ||
-    serveStaticFile(parsedReq.path);
+    ownerRouter(parsedReq);
+
+  if (!raw) {
+    raw = await proxyRouter(parsedReq);
+  }
+
+  if (!raw) {
+    raw = serveStaticFile(parsedReq.path);
+  }
 
   if (raw) {
     // Inject Connection header into already-serialized response
@@ -228,7 +236,7 @@ function createServer({ port = 3000, host = "127.0.0.1" } = {}) {
     };
     resetTimer();
 
-    socket.on("data", (chunk) => {
+    socket.on("data", async (chunk) => {
       buffer += chunk.toString("binary"); // binary-safe accumulation
 
       // Need at least the header section to proceed
@@ -246,9 +254,11 @@ function createServer({ port = 3000, host = "127.0.0.1" } = {}) {
 
       if (!alive) return;
 
-      const { response, keepAlive } = handleRequest(buffer, remoteAddress);
+      const currentBuffer = buffer;
       buffer = "";
       resetTimer();
+
+      const { response, keepAlive } = await handleRequest(currentBuffer, remoteAddress);
 
       socket.write(response, "binary");
 

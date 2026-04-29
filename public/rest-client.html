@@ -604,7 +604,31 @@
       const startTime = performance.now();
       
       try {
-        const response = await fetch(url, opts);
+        let fetchUrl = url;
+        let fetchOpts = opts;
+
+        // Auto-detect external URLs and use proxy to avoid CORS
+        const isLocal = url.startsWith(window.location.origin) || url.startsWith('/') || url.startsWith('http://127.0.0.1') || url.startsWith('http://localhost');
+        
+        if (!isLocal) {
+          fetchUrl = '/api/proxy';
+          fetchOpts = {
+            method: 'POST',
+            // Always authenticate the local proxy request, regardless of what the user sets for the external API
+            headers: { 
+              'X-API-Key': 'supersecret-key-123',
+              'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify({
+              url: url,
+              method: opts.method,
+              headers: opts.headers,
+              body: opts.body
+            })
+          };
+        }
+
+        const response = await fetch(fetchUrl, fetchOpts);
         const endTime = performance.now();
         const text = await response.text();
         
