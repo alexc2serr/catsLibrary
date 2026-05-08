@@ -19,15 +19,14 @@ const fs = require("fs");
 const path = require("path");
 
 const { parseRequest, serializeResponse } = require("../shared/httpParser");
-const { router: catRouter, catStore } = require("./routes");
-const { ownerRouter, setCatStore } = require("./ownerRoutes");
+const { router: catRouter } = require("./routes");
+const { ownerRouter } = require("./ownerRoutes");
 const { authRouter, validateToken } = require("./authRoutes");
 const { logRequest, authenticate, setTokenValidator } = require("./middleware");
 const { makeEmptyResponse } = require("./responseHelpers");
 
 // Wire up dependencies (same as httpServer.js)
 setTokenValidator(validateToken);
-setCatStore(catStore);
 
 const CERTS_DIR = path.join(__dirname, "../../certs");
 
