@@ -198,8 +198,26 @@ function request({
 
     socket.on('end', () => {
       try {
-        const rawResponse = rawResponseBuf.toString('utf8');
-        const parsed      = parseResponse(rawResponse);
+        // Binary-safe splitting of headers and body
+        const separator = Buffer.from('\r\n\r\n');
+        const sepIdx    = rawResponseBuf.indexOf(separator);
+        
+        if (sepIdx === -1) {
+          // No headers found? Fallback to old behavior but shouldn't happen
+          const rawResponse = rawResponseBuf.toString('utf8');
+          const parsed = parseResponse(rawResponse);
+          return resolve({ ...parsed, raw: rawResponse });
+        }
+
+        const headPart = rawResponseBuf.slice(0, sepIdx).toString('utf8');
+        const bodyBuf  = rawResponseBuf.slice(sepIdx + 4);
+        
+        // Use parseResponse just for the headers part
+        const parsed = parseResponse(headPart + '\r\n\r\n');
+        
+        // Overwrite body with the raw buffer (or binary string for compatibility)
+        // We'll use 'binary' encoding (latin1) so Buffer.from(res.body, 'binary') works
+        const body = bodyBuf.toString('binary');
 
         // Store any Set-Cookie headers from the response
         const setCookieHeader = parsed.headers['set-cookie'];
@@ -213,7 +231,7 @@ function request({
           if (match) sessionToken = match[1];
         }
 
-        resolve({ ...parsed, raw: rawResponse });
+        resolve({ ...parsed, body, raw: headPart + '\r\n\r\n' + body });
       } catch (err) {
         reject(new Error(`Response parse error: ${err.message}`));
       }

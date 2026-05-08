@@ -12,6 +12,7 @@
 'use strict';
 
 const mineflayer = require('mineflayer');
+const { Jimp, intToRGBA } = require('jimp');
 const { request } = require('../client/httpClient');
 
 // ─── Configuration ────────────────────────────────────────────────────────────
@@ -70,6 +71,10 @@ function createBot() {
 
         case 'add':
           await handleAdd(bot, parts[3], parts[4]);
+          break;
+
+        case 'photo':
+          await handlePhotoArt(bot, parts[2]);
           break;
 
         case 'owners':
@@ -172,6 +177,59 @@ async function handleOwners(bot) {
   data.data.forEach(owner => {
     bot.chat(`- ${owner.name} (${owner.cats.length} cats)`);
   });
+}
+
+async function handlePhotoArt(bot, id) {
+  if (!id) return bot.chat('Usage: !cat photo <id>');
+
+  bot.chat(`⏳ Fetching photo for cat ${id}...`);
+
+  const res = await request({
+    ...API_SERVER,
+    method: 'GET',
+    path: `/api/cats/${id}/photo`,
+  });
+
+  if (res.statusCode !== 200) {
+    return bot.chat(`😿 No photo found for cat ${id} (Status: ${res.statusCode})`);
+  }
+
+  try {
+    // res.body is a string with binary data (latin1/binary encoding from httpClient)
+    const buffer = Buffer.from(res.body, 'binary');
+    const image = await Jimp.read(buffer);
+    
+    // Resize to fit chat (7 pixels wide to stay strictly under 256 char limit per message)
+    image.resize({ w: 7 }); 
+
+    bot.chat(`🎨 Rendering ${image.bitmap.width}x${image.bitmap.height} pixel art...`);
+
+    for (let y = 0; y < image.bitmap.height; y++) {
+      let components = [""]; // Minecraft JSON chat format
+      for (let x = 0; x < image.bitmap.width; x++) {
+        const { r, g, b, a } = intToRGBA(image.getPixelColor(x, y));
+        
+        // Skip/Space for transparent pixels
+        if (a < 128) {
+          components.push({ text: " " });
+          continue;
+        }
+
+        // Hex color format #RRGGBB
+        const hex = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        components.push({ text: "█", color: hex });
+      }
+      
+      // Send as tellraw to allow true RGB colors and avoid § kick
+      bot.chat(`/tellraw @a ${JSON.stringify(components)}`);
+      
+      // Small delay to avoid spam kick
+      await new Promise(r => setTimeout(r, 100));
+    }
+  } catch (err) {
+    console.error('[MC BOT ERROR]', err);
+    bot.chat(`❌ Error processing image: ${err.message}`);
+  }
 }
 
 // Start the bot
