@@ -1,49 +1,32 @@
 /**
  * ownerRoutes.js
- * 🎰 Advanced CRUD — Owners resource with relationships to Cats
- *
- * Endpoints:
- *   GET    /api/owners                       → 200 list of owners
- *   GET    /api/owners/:id                   → 200 owner (with their cats embedded)
- *   POST   /api/owners                       → 201 created owner
- *   PUT    /api/owners/:id                   → 200 updated owner
- *   DELETE /api/owners/:id                   → 204 (unlinks cats too)
- *   POST   /api/owners/:oid/cats/:cid        → 200 assigns a cat to an owner
- *   DELETE /api/owners/:oid/cats/:cid        → 204 removes assignment
- *
- * Note: ownerRoutes intentionally imports the catStore from routes.js
- * to establish a live reference (same array in memory).
+ * 🎰 Advanced CRUD — Owners resource with relationships to Cats (SQLite version)
  */
 
 'use strict';
 
+const db = require('./db');
 const { makeResponse, makeEmptyResponse, computeETag, isCacheHit, makeNotModified } = require('./responseHelpers');
-
-// ─── In-memory store ──────────────────────────────────────────────────────────
-
-/**
- * @type {{ id: number, name: string, email: string, phone?: string }[]}
- */
-let ownerStore = [
-  { id: 1, name: 'Alice Martínez', email: 'alice@example.com', phone: '+34 600 111 222' },
-  { id: 2, name: 'Bob García',     email: 'bob@example.com',   phone: '+34 600 333 444' },
-];
-
-
-/** Live reference to the cats array (injected by the server on startup) */
-let catStore = null;
-
-/** Call this once to inject the shared cat store */
-function setCatStore(store) { catStore = store; }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+/** Finds the first available ID (filling gaps from deletions) */
+function getNextOwnerId() {
+  const ids = db.prepare('SELECT id FROM owners ORDER BY id ASC').all().map(r => r.id);
+  let nextId = 1;
+  for (const id of ids) {
+    if (id === nextId) nextId++;
+    else break;
+  }
+  return nextId;
+}
+
 function getOwnerCats(ownerId) {
-  if (!catStore) return [];
-  return catStore.filter((c) => c.ownerId === ownerId);
+  return db.prepare('SELECT id, name, breed, age, color, ownerId, createdAt, updatedAt FROM cats WHERE ownerId = ?').all(ownerId);
 }
 
 function ownerWithCats(owner) {
+  if (!owner) return null;
   return { ...owner, cats: getOwnerCats(owner.id) };
 }
 
@@ -60,17 +43,22 @@ function extractCatId(path) {
 // ─── Route handlers ───────────────────────────────────────────────────────────
 
 function getAllOwners(reqHeaders) {
-  const data = ownerStore.map(ownerWithCats);
-  const etag = computeETag(data);
+  const owners = db.prepare('SELECT * FROM owners').all();
+  const data = owners.map(ownerWithCats);
+  const payload = { success: true, count: data.length, data };
+  const etag = computeETag(payload);
+  
   if (isCacheHit(reqHeaders, etag)) return makeNotModified(etag);
-  return makeResponse(200, 'OK', { success: true, count: data.length, data });
+  return makeResponse(200, 'OK', payload);
 }
 
 function getOwnerById(id, reqHeaders) {
-  const owner = ownerStore.find((o) => o.id === id);
+  const owner = db.prepare('SELECT * FROM owners WHERE id = ?').get(id);
   if (!owner) return makeResponse(404, 'Not Found', { error: `Owner ${id} not found` });
+  
   const data = ownerWithCats(owner);
   const etag = computeETag(data);
+  
   if (isCacheHit(reqHeaders, etag)) return makeNotModified(etag);
   return makeResponse(200, 'OK', { success: true, data });
 }
@@ -85,18 +73,23 @@ function createOwner(body) {
     return makeResponse(422, 'Unprocessable Entity', { error: '"name" and "email" are required' });
   }
 
-  let newId = 1;
-  const takenIds = new Set(ownerStore.map(o => o.id));
-  while (takenIds.has(newId)) newId++;
+  const newId = getNextOwnerId();
+  try {
+    db.prepare('INSERT INTO owners (id, name, email, phone) VALUES (?, ?, ?, ?)').run(newId, name, email, phone ?? null);
+  } catch (err) {
+    if (err.message.includes('UNIQUE constraint failed: owners.email')) {
+      return makeResponse(409, 'Conflict', { error: `Email "${email}" is already taken` });
+    }
+    throw err;
+  }
 
-  const owner = { id: newId, name, email, phone: phone ?? null };
-  ownerStore.push(owner);
+  const owner = db.prepare('SELECT * FROM owners WHERE id = ?').get(newId);
   return makeResponse(201, 'Created', { success: true, data: ownerWithCats(owner) });
 }
 
 function updateOwner(id, body) {
-  const idx = ownerStore.findIndex((o) => o.id === id);
-  if (idx === -1) return makeResponse(404, 'Not Found', { error: `Owner ${id} not found` });
+  const exists = db.prepare('SELECT id FROM owners WHERE id = ?').get(id);
+  if (!exists) return makeResponse(404, 'Not Found', { error: `Owner ${id} not found` });
 
   let data;
   try { data = JSON.parse(body); }
@@ -107,56 +100,57 @@ function updateOwner(id, body) {
     return makeResponse(422, 'Unprocessable Entity', { error: '"name" and "email" are required' });
   }
 
-  ownerStore[idx] = { id, name, email, phone: phone ?? null };
-  return makeResponse(200, 'OK', { success: true, data: ownerWithCats(ownerStore[idx]) });
+  try {
+    db.prepare('UPDATE owners SET name = ?, email = ?, phone = ? WHERE id = ?').run(name, email, phone ?? null, id);
+  } catch (err) {
+    if (err.message.includes('UNIQUE constraint failed: owners.email')) {
+      return makeResponse(409, 'Conflict', { error: `Email "${email}" is already taken` });
+    }
+    throw err;
+  }
+
+  const owner = db.prepare('SELECT * FROM owners WHERE id = ?').get(id);
+  return makeResponse(200, 'OK', { success: true, data: ownerWithCats(owner) });
 }
 
 function deleteOwner(id) {
-  const idx = ownerStore.findIndex((o) => o.id === id);
-  if (idx === -1) return makeResponse(404, 'Not Found', { error: `Owner ${id} not found` });
+  // SQLite handles unlinking cats if we set up FOREIGN KEY ... ON DELETE SET NULL
+  // which we did in db.js.
+  const result = db.prepare('DELETE FROM owners WHERE id = ?').run(id);
+  if (result.changes === 0) return makeResponse(404, 'Not Found', { error: `Owner ${id} not found` });
 
-  // Unlink cats from this owner
-  if (catStore) {
-    for (const cat of catStore) {
-      if (cat.ownerId === id) cat.ownerId = null;
-    }
-  }
-  ownerStore.splice(idx, 1);
   return makeEmptyResponse(204, 'No Content');
 }
 
 function assignCatToOwner(ownerId, catId) {
-  const owner = ownerStore.find((o) => o.id === ownerId);
+  const owner = db.prepare('SELECT id FROM owners WHERE id = ?').get(ownerId);
   if (!owner) return makeResponse(404, 'Not Found', { error: `Owner ${ownerId} not found` });
-  if (!catStore) return makeResponse(500, 'Internal Server Error', { error: 'Cat store not available' });
 
-  const cat = catStore.find((c) => c.id === catId);
+  const cat = db.prepare('SELECT id FROM cats WHERE id = ?').get(catId);
   if (!cat) return makeResponse(404, 'Not Found', { error: `Cat ${catId} not found` });
 
-  cat.ownerId = ownerId;
-  return makeResponse(200, 'OK', { success: true, message: `Cat ${catId} assigned to owner ${ownerId}`, data: cat });
+  const now = new Date().toISOString();
+  db.prepare('UPDATE cats SET ownerId = ?, updatedAt = ? WHERE id = ?').run(ownerId, now, catId);
+
+  const updatedCat = db.prepare('SELECT id, name, breed, age, color, ownerId, createdAt, updatedAt FROM cats WHERE id = ?').get(catId);
+  return makeResponse(200, 'OK', { success: true, message: `Cat ${catId} assigned to owner ${ownerId}`, data: updatedCat });
 }
 
 function unassignCatFromOwner(ownerId, catId) {
-  if (!catStore) return makeResponse(500, 'Internal Server Error', { error: 'Cat store not available' });
-  const cat = catStore.find((c) => c.id === catId && c.ownerId === ownerId);
+  const cat = db.prepare('SELECT id FROM cats WHERE id = ? AND ownerId = ?').get(catId, ownerId);
   if (!cat) return makeResponse(404, 'Not Found', { error: `Cat ${catId} is not owned by owner ${ownerId}` });
-  cat.ownerId = null;
+  
+  const now = new Date().toISOString();
+  db.prepare('UPDATE cats SET ownerId = NULL, updatedAt = ? WHERE id = ?').run(now, catId);
   return makeEmptyResponse(204, 'No Content');
 }
 
 // ─── Router ───────────────────────────────────────────────────────────────────
 
-/**
- * Routes /api/owners/* requests.
- * @param {Object} parsedReq
- * @returns {string|null} serialized response or null if no match
- */
 function ownerRouter(parsedReq) {
   const { method, path: reqPath, body, headers } = parsedReq;
   const cleanPath = reqPath.split('?')[0];
 
-  // ── Collection ──────────────────────────────────────────────────────────────
   if (cleanPath === '/api/owners') {
     if (method === 'GET')  return getAllOwners(headers);
     if (method === 'HEAD') {
@@ -167,7 +161,6 @@ function ownerRouter(parsedReq) {
     return makeEmptyResponse(405, 'Method Not Allowed', { Allow: 'GET, HEAD, POST' });
   }
 
-  // ── Cat assignment: /api/owners/:oid/cats/:cid ──────────────────────────────
   if (/^\/api\/owners\/\d+\/cats\/\d+$/.test(cleanPath)) {
     const ownerId = extractOwnerId(cleanPath);
     const catId   = extractCatId(cleanPath);
@@ -176,7 +169,6 @@ function ownerRouter(parsedReq) {
     return makeEmptyResponse(405, 'Method Not Allowed', { Allow: 'POST, DELETE' });
   }
 
-  // ── Item: /api/owners/:id ───────────────────────────────────────────────────
   if (/^\/api\/owners\/\d+$/.test(cleanPath)) {
     const id = extractOwnerId(cleanPath);
     if (method === 'GET')    return getOwnerById(id, headers);
@@ -192,4 +184,4 @@ function ownerRouter(parsedReq) {
   return null;
 }
 
-module.exports = { ownerRouter, ownerStore, setCatStore };
+module.exports = { ownerRouter };

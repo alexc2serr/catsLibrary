@@ -1,44 +1,22 @@
 /**
  * httpServerExpress.js
- * ⚙️ Refactor with HTTP Framework — Express-based implementation
- *
- * A second server implementation using Express (a high-level HTTP framework)
- * that exposes the SAME API as the raw-socket server, demonstrating that
- * our CLI client can interoperate with it seamlessly.
- *
- * Run: npm run express
- *
- * This file intentionally imports the same in-memory data as the raw server
- * to prove they share the same REST contract.
+ * ⚙️ Express-based implementation with SQLite persistence.
  */
 
 'use strict';
 
 const express = require('express');
+const crypto = require('crypto');
+const path = require('path');
+const db = require('./db');
+const { getNextId } = require('./db');
 
-// Shared middleware/auth logic re-used from raw implementation
-const { VALID_API_KEYS } = require('./middleware');
-const { validateToken }  = require('./authRoutes');
-
-// ─── Express App ──────────────────────────────────────────────────────────────
+// Shared middleware/auth logic
+const { isValidApiKey } = require('./middleware');
+const { validateToken } = require('./authRoutes');
 
 const app = express();
 app.use(express.json());
-
-// ─── In-memory stores ─────────────────────────────────────────────────────────
-
-const crypto = require('crypto');
-
-let catStore = [
-  { id: 1, name: 'Whiskers', breed: 'Domestic Shorthair', age: 3,  color: 'Orange', ownerId: null },
-  { id: 2, name: 'Luna',     breed: 'Siamese',            age: 5,  color: 'Cream',  ownerId: null },
-  { id: 3, name: 'Mochi',   breed: 'Scottish Fold',      age: 2,  color: 'Grey',   ownerId: null },
-];
-let nextCatId = 4;
-
-let userStore = [];
-let nextUserId = 1;
-const sessionMap = new Map();
 
 // ─── Auth helpers ─────────────────────────────────────────────────────────────
 
@@ -56,12 +34,12 @@ function verifyPwd(pwd, stored) {
 
 function requireAuth(req, res, next) {
   const apiKey = req.headers['x-api-key'];
-  if (apiKey && VALID_API_KEYS.has(apiKey)) return next();
+  if (isValidApiKey(apiKey)) return next();
 
   const authH = req.headers['authorization'] || '';
   if (authH.startsWith('Bearer ')) {
     const tok = authH.slice(7).trim();
-    if (VALID_API_KEYS.has(tok) || (validateToken(tok))) return next();
+    if (isValidApiKey(tok) || validateToken(tok)) return next();
   }
 
   const cookies = Object.fromEntries(
@@ -87,9 +65,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ─── Static files ─────────────────────────────────────────────────────────────
-
-app.use(express.static(require('path').join(__dirname, '../../public')));
+app.use(express.static(path.join(__dirname, '../../public')));
 
 // ─── Auth routes ──────────────────────────────────────────────────────────────
 
@@ -97,58 +73,82 @@ app.post('/auth/register', (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password) return res.status(422).json({ error: 'username and password required' });
   if (password.length < 6)    return res.status(422).json({ error: 'Password ≥ 6 characters' });
-  if (userStore.find((u) => u.username === username))
-    return res.status(409).json({ error: `${username} already taken` });
-  const user = { id: nextUserId++, username, passwordHash: hashPwd(password) };
-  userStore.push(user);
-  res.status(201).json({ success: true, user: { id: user.id, username } });
+  
+  const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
+  if (existing) return res.status(409).json({ error: `${username} already taken` });
+
+  const newId = getNextId('users');
+  db.prepare('INSERT INTO users (id, username, passwordHash) VALUES (?, ?, ?)').run(newId, username, hashPwd(password));
+  res.status(201).json({ success: true, user: { id: newId, username } });
 });
 
 app.post('/auth/login', (req, res) => {
   const { username, password } = req.body || {};
-  const user = userStore.find((u) => u.username === username);
+  const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
   if (!user || !verifyPwd(password, user.passwordHash))
     return res.status(401).json({ error: 'Invalid credentials' });
-  const token     = crypto.randomBytes(32).toString('hex');
-  const expiresAt = new Date(Date.now() + 3_600_000).toISOString();
-  sessionMap.set(token, { userId: user.id, expiresAt: Date.now() + 3_600_000 });
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiresAtMs = Date.now() + 3_600_000;
+  db.prepare('INSERT INTO sessions (token, userId, expiresAt) VALUES (?, ?, ?)').run(token, user.id, expiresAtMs);
+
   res.cookie('sessionToken', token, { httpOnly: true, maxAge: 3600, sameSite: 'Strict' });
-  res.json({ success: true, token, expiresAt, user: { id: user.id, username } });
+  res.json({ success: true, token, expiresAt: new Date(expiresAtMs).toISOString(), user: { id: user.id, username } });
 });
 
 app.post('/auth/logout', (req, res) => {
-  const token = req.headers['x-session-token'];
-  if (token) sessionMap.delete(token);
+  const token = req.headers['x-session-token'] || (req.headers['cookie'] || '').match(/sessionToken=([^;]+)/)?.[1];
+  if (token) db.prepare('DELETE FROM sessions WHERE token = ?').run(token);
   res.clearCookie('sessionToken');
   res.sendStatus(204);
 });
 
 // ─── Cat routes ───────────────────────────────────────────────────────────────
 
-app.get   ('/api/cats',     requireAuth, (req, res) => res.json({ success: true, count: catStore.length, data: catStore }));
-app.get   ('/api/cats/:id', requireAuth, (req, res) => {
-  const cat = catStore.find((c) => c.id === +req.params.id);
+app.get('/api/cats', requireAuth, (req, res) => {
+  const cats = db.prepare('SELECT id, name, breed, age, color, ownerId, createdAt, updatedAt FROM cats').all();
+  res.json({ success: true, count: cats.length, data: cats });
+});
+
+app.get('/api/cats/:id', requireAuth, (req, res) => {
+  const cat = db.prepare('SELECT id, name, breed, age, color, ownerId, createdAt, updatedAt FROM cats WHERE id = ?').get(req.params.id);
   cat ? res.json({ success: true, data: cat }) : res.status(404).json({ error: 'Not found' });
 });
-app.post  ('/api/cats',     requireAuth, (req, res) => {
+
+app.post('/api/cats', requireAuth, (req, res) => {
   const { name, breed, age, color } = req.body || {};
   if (!name || !breed) return res.status(422).json({ error: 'name and breed required' });
-  const cat = { id: nextCatId++, name, breed, age: age ?? null, color: color ?? null, ownerId: null };
-  catStore.push(cat);
+  
+  const newId = getNextId('cats');
+  const now = new Date().toISOString();
+  db.prepare(`
+    INSERT INTO cats (id, name, breed, age, color, ownerId, createdAt, updatedAt)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(newId, name, breed, age ?? null, color ?? null, null, now, now);
+
+  const cat = db.prepare('SELECT id, name, breed, age, color, ownerId, createdAt, updatedAt FROM cats WHERE id = ?').get(newId);
   res.status(201).json({ success: true, data: cat });
 });
-app.put   ('/api/cats/:id', requireAuth, (req, res) => {
-  const idx = catStore.findIndex((c) => c.id === +req.params.id);
-  if (idx === -1) return res.status(404).json({ error: 'Not found' });
+
+app.put('/api/cats/:id', requireAuth, (req, res) => {
+  const exists = db.prepare('SELECT id FROM cats WHERE id = ?').get(req.params.id);
+  if (!exists) return res.status(404).json({ error: 'Not found' });
+
   const { name, breed, age, color } = req.body || {};
   if (!name || !breed) return res.status(422).json({ error: 'name and breed required' });
-  catStore[idx] = { ...catStore[idx], name, breed, age: age ?? null, color: color ?? null };
-  res.json({ success: true, data: catStore[idx] });
+
+  const now = new Date().toISOString();
+  db.prepare(`
+    UPDATE cats SET name = ?, breed = ?, age = ?, color = ?, updatedAt = ? WHERE id = ?
+  `).run(name, breed, age ?? null, color ?? null, now, req.params.id);
+
+  const cat = db.prepare('SELECT id, name, breed, age, color, ownerId, createdAt, updatedAt FROM cats WHERE id = ?').get(req.params.id);
+  res.json({ success: true, data: cat });
 });
+
 app.delete('/api/cats/:id', requireAuth, (req, res) => {
-  const idx = catStore.findIndex((c) => c.id === +req.params.id);
-  if (idx === -1) return res.status(404).json({ error: 'Not found' });
-  catStore.splice(idx, 1);
+  const result = db.prepare('DELETE FROM cats WHERE id = ?').run(req.params.id);
+  if (result.changes === 0) return res.status(404).json({ error: 'Not found' });
   res.sendStatus(204);
 });
 

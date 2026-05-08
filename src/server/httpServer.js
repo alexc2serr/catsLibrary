@@ -19,8 +19,8 @@ const fs = require("fs");
 const path = require("path");
 
 const { parseRequest, serializeResponse } = require("../shared/httpParser");
-const { router: catRouter, catStore } = require("./routes");
-const { ownerRouter, setCatStore } = require("./ownerRoutes");
+const { router: catRouter } = require("./routes");
+const { ownerRouter } = require("./ownerRoutes");
 const { authRouter, validateToken } = require("./authRoutes");
 const { proxyRouter } = require("./proxyRoutes");
 const { logRequest, authenticate, setTokenValidator } = require("./middleware");
@@ -30,8 +30,6 @@ const PUBLIC_DIR = path.join(__dirname, "../../public");
 
 // Wire up: middleware can now validate session tokens from authRoutes
 setTokenValidator(validateToken);
-// Wire up: ownerRoutes can access the same catStore array
-setCatStore(catStore);
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
