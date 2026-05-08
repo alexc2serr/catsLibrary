@@ -10,7 +10,8 @@
     "client": "node src/client/index.js",
     "test": "node --test tests/api.test.js",
     "gen-certs": "node scripts/generateCerts.js",
-    "dev": "node -e \"const {createServer}=require('./src/server/httpServer');createServer({port:3000}).start();\""
+    "dev": "node -e \"const {createServer}=require('./src/server/httpServer');createServer({port:3000}).start();\"",
+    "start:minecraft": "node src/minecraft/minecraftBot.js"
   },
   "keywords": [
     "http",
@@ -28,6 +29,7 @@
   },
   "dependencies": {
     "better-sqlite3": "^12.9.0",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "mineflayer": "^4.37.1"
   }
 }
