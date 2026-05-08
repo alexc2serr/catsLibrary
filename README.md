@@ -40,11 +40,14 @@ usj-http-project/
 │   │   ├── httpServer.js        # Raw TCP server (net.createServer)
 │   │   ├── httpServerTLS.js     # TLS variant (tls.createServer)
 │   │   ├── httpServerExpress.js # Framework refactor (Express)
+│   │   ├── db.js                # [NEW] SQLite Persistence (better-sqlite3)
 │   │   ├── routes.js            # Cat CRUD + photo upload + ETag
 │   │   ├── ownerRoutes.js       # Advanced CRUD — Owners resource
 │   │   ├── authRoutes.js        # Login flow (register/login/logout/me)
 │   │   ├── middleware.js        # Logging + Authentication + Cookie parsing
-│   │   └── responseHelpers.js  # Shared response builders + ETag helpers
+│   │   └── responseHelpers.js   # Shared response builders + ETag helpers
+│   ├── minecraft/
+│   │   └── minecraftBot.js      # [NEW] Minecraft Integration (mineflayer)
 │   └── client/
 │       ├── httpClient.js        # Raw TCP client library + CookieJar
 │       └── index.js             # Interactive CLI
@@ -70,10 +73,10 @@ TCP socket
 httpParser.parseRequest()        ← RFC 9112 CRLF framing, chunked decoding
     │
     ▼
-middleware.authenticate()        ← API Key / Bearer Token / Session Cookie
+middleware.authenticate()        ← API Key / Bearer Token / Session Cookie (SQLite lookup)
     │
     ▼
-Route chain:
+Route chain (SQLite persistence):
   authRouter()   → /auth/*
   catRouter()    → /api/cats/*
   ownerRouter()  → /api/owners/*
@@ -108,6 +111,9 @@ npm run start:express
 # Optional: Generate TLS certs and start HTTPS server (port 3443)
 npm run gen-certs
 npm run start:tls
+
+# Optional: Start Minecraft Bot (requires a running MC server)
+npm run start:minecraft
 
 # Run automated tests (server must be running)
 npm test
@@ -229,6 +235,7 @@ curl -H "X-Session-Token: <token>" http://127.0.0.1:3000/auth/me
 - `PUT`/`POST` return **405 Method Not Allowed** with `Allow:` header on wrong verbs
 - **JSON** for all API request/response bodies
 - `400 Bad Request` on malformed JSON
+- **Persistent Storage**: All data is stored in an **SQLite database** (`usj-cat-shelter.db`). No more data loss on restart!
 - **Concurrent requests**: handled via Node's non-blocking event loop
 - **Port configurable**: `createServer({ port: 3000 })`
 
@@ -241,7 +248,7 @@ Implemented in `middleware.js`. The server accepts:
 1. `X-API-Key: supersecret-key-123` header
 2. `Authorization: Bearer supersecret-key-123` header
 
-Keys are compared using string set lookup. Only `/api/*` paths require authentication; `/auth/*` and static files are always public.
+Keys are now stored in the **SQLite database** for persistence. Only `/api/*` paths require authentication; `/auth/*` and static files are always public.
 
 ---
 
@@ -254,6 +261,7 @@ Implemented in `authRoutes.js`.
 - **Token expiry**: 1 hour from issue
 - **Cookie delivery**: `Set-Cookie: sessionToken=...; HttpOnly; Path=/; Max-Age=3600; SameSite=Strict`
 - **Client-side CookieJar**: `httpClient.js` automatically stores and resends cookies
+- **SQLite Storage**: All user accounts and active sessions persist in the database.
 
 ```
 POST /auth/register  → 201 { user }
@@ -269,7 +277,7 @@ Implemented in `routes.js`.
 
 - `POST /api/cats/:id/photo`: accepts JSON body `{ photo: "data:image/jpeg;base64,..." }` or raw binary body with `Content-Type: image/*`
 - `GET /api/cats/:id/photo`: returns the image as raw binary with correct MIME type
-- Photos stored in memory as base64 strings
+- Photos stored in the database as base64 strings.
 - GUI client has a file picker that converts images to data URLs before sending
 
 ---
@@ -388,11 +396,12 @@ Implemented across `middleware.js` and `httpClient.js`.
 Implemented in `ownerRoutes.js`.
 
 A second resource — `Owner` — with a *bidirectional relationship* to cats:
-- Each cat has an `ownerId` field (foreign key)
+- Each cat has an `ownerId` field (foreign key with `ON DELETE SET NULL`)
 - `GET /api/owners/:id` embeds the full cat objects in the response
-- `POST /api/owners/:oid/cats/:cid` assigns a cat to an owner (sets `cat.ownerId`)
+- `POST /api/owners/:oid/cats/:cid` assigns a cat to an owner
 - `DELETE /api/owners/:oid/cats/:cid` removes the assignment
 - `DELETE /api/owners/:id` unlinks all cats before removing the owner
+- **Relational Integrity**: Managed via SQLite Foreign Key constraints.
 
 ---
 
@@ -432,6 +441,19 @@ authenticate(parsedReq)     // may short-circuit with 401
 → authRouter / catRouter / ownerRouter  // actual business logic
 → logRequest(...)           // always runs
 ```
+
+---
+
+### 🎮 Minecraft Integration (+ ??? pts)
+Implemented in `src/minecraft/minecraftBot.js` using **Mineflayer**.
+
+A specialized client that allows interacting with the Cat Shelter from within Minecraft:
+- **`!cat list`**: Lists cats from the SQLite database in the game chat.
+- **`!cat add <name> <breed>`**: Creates a new cat entry via HTTP POST.
+- **`!cat info <id>`**: Fetches cat details.
+- **Interoperability**: The bot uses our `httpClient.js` (raw sockets) to talk to the server, demonstrating that the API is platform-agnostic.
+
+Run it with: `npm run start:minecraft` (requires a Minecraft server/LAN open).
 
 ---
 
@@ -523,8 +545,8 @@ authenticate(parsedReq)     // may short-circuit with 401
 ## Future Improvements
 
 1. **HTTP/2**: Replace TCP text framing with binary frame multiplexing (HPACK header compression, streams)
-2. **Persistent storage**: Replace in-memory arrays with SQLite (via `better-sqlite3`) for data durability across restarts
-3. **Rate limiting**: Track request counts per IP; return `429 Too Many Requests` after threshold
+2. **Rate limiting**: Track request counts per IP; return `429 Too Many Requests` after threshold
+3. **WebSockets**: Upgrade mechanism (`101 Switching Protocols`) for real-time cat shelter notifications
 4. **WebSockets**: Upgrade mechanism (`101 Switching Protocols`) for real-time cat shelter notifications
 5. **Content negotiation**: `Accept:` header handling to return XML or MessagePack in addition to JSON
 6. **Port configuration via CLI arg**: `node src/server/httpServer.js --port 8080`
